@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP ADV7125
+D 330MHz Triple 8-Bit High Speed Video DAC
+K 330MHz Triple 8-Bit High Speed Video DAC
+F https://www.analog.com/media/en/technical-documentation/data-sheets/ADV7125.pdf
+$ENDCMP
+#
+#End Doc Library
