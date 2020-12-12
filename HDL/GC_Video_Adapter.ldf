@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BaliProject version="3.2" title="GC_Video_Adapter" device="LCMXO2-1200HC-5TG144C" default_implementation="GC_Video_Adapter">
+    <Options/>
+    <Implementation title="GC_Video_Adapter" dir="GC_Video_Adapter" description="GC_Video_Adapter" synthesis="lse" default_strategy="Strategy1">
+        <Options/>
+        <Source name="GC_Video_Adapter.lpf" type="Logic Preference" type_short="LPF">
+            <Options/>
+        </Source>
+    </Implementation>
+    <Strategy name="Strategy1" file="GC_Video_Adapter1.sty"/>
+</BaliProject>
