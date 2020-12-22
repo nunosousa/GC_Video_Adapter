@@ -25,16 +25,20 @@ Test_Sample_out[:Paddind_Head_size] = Padding_Head
 Test_Sample_out[Paddind_Head_size + Test_Sample_size*2:] = Padding_Tail
 
 # Adjust Test vector for plotting against interpolated result
-Test_Sample_in_plot = np.zeros(Test_Sample_size*2 + Paddind_Head_size + Padding_Tail_Size)
-print(Test_Sample_in_plot[Paddind_Head_size:2:Paddind_Head_size + Test_Sample_size*2])
-Test_Sample_in_plot[Paddind_Head_size:Paddind_Head_size + Test_Sample_size*2:2] = Test_Sample_in
+Test_Sample_in_spread = np.zeros(Test_Sample_size * 2 + Paddind_Head_size + Padding_Tail_Size)
+print(Test_Sample_in_spread[Paddind_Head_size:2:Paddind_Head_size + Test_Sample_size * 2])
+Test_Sample_in_spread[Paddind_Head_size:Paddind_Head_size + Test_Sample_size * 2:2] = Test_Sample_in
 
 # Process filter
+print(Test_Sample_in_spread)
 for i in range(Paddind_Head_size+1, Paddind_Head_size + Test_Sample_size*2 + 1, 2):
+    samples_after = Test_Sample_in_spread[(i+1):(i+(FIR_Coefs.size*2)):2]
+    samples_before = Test_Sample_in_spread[(i-(FIR_Coefs.size*2)+1):(i-1):2]
+    print(samples_before)
     Test_Sample_out[i] = 0.1
 
 # Plots
 pyplot.figure(1)
-pyplot.plot(Test_Sample_in_plot, '.')
+pyplot.plot(Test_Sample_in_spread, '.')
 pyplot.plot(Test_Sample_out, '.')
 pyplot.show()
