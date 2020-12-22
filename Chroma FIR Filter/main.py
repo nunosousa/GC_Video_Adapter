@@ -11,7 +11,7 @@ Test_Sample_size = 100
 # Test vector
 rng = np.random.default_rng()
 rand_seq = np.absolute(rng.standard_normal(Test_Sample_size))
-Test_Sample_in = np.divide(rand_seq, np.amax(rand_seq))*255
+Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
 
 # Number of head and tail buffer samples
 Paddind_Head_size = (FIR_Coefs.size*2)-1
@@ -24,6 +24,11 @@ Padding_Tail_Size = FIR_Coefs.size*2
 #Test_Sample_in[0:(FIR_Coefs.size*2)-1] =
 print(Test_Sample_in)
 
+
+# Plots
 pyplot.figure(1)
+pyplot.subplot(2, 1, 1)
+pyplot.plot(Test_Sample_in)
+pyplot.subplot(2, 1, 2)
 pyplot.plot(Test_Sample_in)
 pyplot.show()
