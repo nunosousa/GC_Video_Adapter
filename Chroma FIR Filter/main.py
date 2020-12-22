@@ -24,8 +24,13 @@ Test_Sample_out = np.zeros(Test_Sample_size*2 + Paddind_Head_size + Padding_Tail
 Test_Sample_out[:Paddind_Head_size] = Padding_Head
 Test_Sample_out[Paddind_Head_size + Test_Sample_size*2:] = Padding_Tail
 
+# Plot setup
+Test_Sample_in_plot = np.zeros(Test_Sample_size*2 + Paddind_Head_size + Padding_Tail_Size)
+print(Test_Sample_in_plot[Paddind_Head_size:2:Paddind_Head_size + Test_Sample_size*2])
+Test_Sample_in_plot[Paddind_Head_size:Paddind_Head_size + Test_Sample_size*2:2] = Test_Sample_in
+
 # Plots
 pyplot.figure(1)
-#pyplot.plot(Test_Sample_in)
+pyplot.plot(Test_Sample_in_plot, '.')
 pyplot.plot(Test_Sample_out, '.')
 pyplot.show()
