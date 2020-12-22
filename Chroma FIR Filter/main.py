@@ -6,7 +6,7 @@ FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
 FIR_Norm_Coef = 2048
 
 # Number of (downsampled) samples
-Test_Sample_size = 100
+Test_Sample_size = 10
 
 # Test vector
 rng = np.random.default_rng()
@@ -16,19 +16,16 @@ Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
 # Number of head and tail buffer samples
 Paddind_Head_size = (FIR_Coefs.size*2)-1
 Padding_Tail_Size = FIR_Coefs.size*2
+Padding_Head = np.ones(Paddind_Head_size)
+Padding_Tail = np.ones(Padding_Tail_Size)
 
-
-
-#Test_Sample_in = np.zeros(Test_Sample_size*2 + Paddind_Head_size + Padding_Tail_Size)
-
-#Test_Sample_in[0:(FIR_Coefs.size*2)-1] =
-print(Test_Sample_in)
-
+# Build output vector
+Test_Sample_out = np.zeros(Test_Sample_size*2 + Paddind_Head_size + Padding_Tail_Size)
+Test_Sample_out[:Paddind_Head_size] = Padding_Head
+Test_Sample_out[Paddind_Head_size + Test_Sample_size*2:] = Padding_Tail
 
 # Plots
 pyplot.figure(1)
-pyplot.subplot(2, 1, 1)
-pyplot.plot(Test_Sample_in)
-pyplot.subplot(2, 1, 2)
-pyplot.plot(Test_Sample_in)
+#pyplot.plot(Test_Sample_in)
+pyplot.plot(Test_Sample_out, '.')
 pyplot.show()
