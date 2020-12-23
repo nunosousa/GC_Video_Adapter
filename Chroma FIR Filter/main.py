@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 import matplotlib.pyplot as pyplot
 
 # FIR filter coeficients used on the Interpolation filter
@@ -6,16 +7,30 @@ FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
 FIR_Norm_Coef = 2048
 
 # Number of (downsampled) samples
-Test_Sample_size = 100
+Test_Sample_size = 200
 
 # Test vector
-# 1 - Random sequence
-rng = np.random.default_rng()
-rand_seq = np.absolute(rng.standard_normal(Test_Sample_size))
-Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
-# 2 - sine sequence
-x = np.linspace(-np.pi*10, np.pi*10, Test_Sample_size)
-Test_Sample_in = np.sin(x)
+sample_data_scenario = 4
+if sample_data_scenario == 1:
+    # 1 - Random sequence
+    rng = np.random.default_rng()
+    rand_seq = np.absolute(rng.standard_normal(Test_Sample_size))
+    Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
+elif sample_data_scenario == 2:
+    # 2 - sine sequence
+    x = np.linspace(-np.pi*10, np.pi*10, Test_Sample_size)
+    sin_seq = np.sin(x)
+    Test_Sample_in = np.floor(np.divide((sin_seq - np.amin(sin_seq)), np.amax(sin_seq))*255)
+elif sample_data_scenario == 3:
+    # 3 - step data
+    t = np.linspace(0, 1, Test_Sample_size, endpoint=False)
+    square_seq = signal.square(2 * np.pi * 5 * t)
+    Test_Sample_in = np.floor(np.divide((square_seq - np.amin(square_seq)), np.amax(square_seq)) * 255)
+elif sample_data_scenario == 4:
+    # 4 - sawtooth data
+    t = np.linspace(0, 1, Test_Sample_size)
+    sawtooth_seq = signal.sawtooth(2 * np.pi * 5 * t)
+    Test_Sample_in = np.floor(np.divide((sawtooth_seq - np.amin(sawtooth_seq)), np.amax(sawtooth_seq)) * 255)
 
 # Number of head and tail buffer samples
 Paddind_Head_size = (FIR_Coefs.size*2)-2
