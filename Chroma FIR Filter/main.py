@@ -3,8 +3,13 @@ from scipy import signal
 import matplotlib.pyplot as pyplot
 
 # FIR filter coeficients used on the Interpolation filter
-FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
-FIR_Norm_Coef = 2048
+filter_scenario = 2
+if filter_scenario == 1:
+    FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
+    FIR_Norm_Coef = 2048
+else:
+    FIR_Coefs = np.array([1])
+    FIR_Norm_Coef = 2
 
 # Number of (downsampled) samples
 Test_Sample_size = 200
@@ -26,7 +31,7 @@ elif sample_data_scenario == 3:
     t = np.linspace(0, 1, Test_Sample_size, endpoint=False)
     square_seq = signal.square(2 * np.pi * 5 * t)
     Test_Sample_in = np.floor(np.divide((square_seq - np.amin(square_seq)), np.amax(square_seq)) * 255)
-elif sample_data_scenario == 4:
+else:
     # 4 - sawtooth data
     t = np.linspace(0, 1, Test_Sample_size)
     sawtooth_seq = signal.sawtooth(2 * np.pi * 5 * t)
@@ -48,15 +53,10 @@ Test_Sample_in_spread = np.zeros(Test_Sample_size * 2 + Paddind_Head_size + Padd
 Test_Sample_in_spread[Paddind_Head_size:Paddind_Head_size + Test_Sample_size * 2:2] = Test_Sample_in
 
 # Process filter
-#print(Test_Sample_in_spread)
 for i in range(Paddind_Head_size+1, Paddind_Head_size + Test_Sample_size*2 + 1, 2):
-    #print(i)
-    #print(Test_Sample_in_spread[i])
     samples_after = Test_Sample_in_spread[(i+1):(i+Padding_Tail_Size+1):2]
     samples_before = Test_Sample_in_spread[(i-Paddind_Head_size-1):i:2]
 
-    #print(samples_after)
-    #print(samples_before)
     Test_Sample_out[i-1] = Test_Sample_in_spread[i-1]
     Test_Sample_out[i] = np.sum(np.multiply(np.add(samples_after, np.flip(samples_before)), FIR_Coefs))/FIR_Norm_Coef
 
