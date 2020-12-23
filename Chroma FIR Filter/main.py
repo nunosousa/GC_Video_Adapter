@@ -6,12 +6,16 @@ FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
 FIR_Norm_Coef = 2048
 
 # Number of (downsampled) samples
-Test_Sample_size = 5
+Test_Sample_size = 100
 
 # Test vector
+# 1 - Random sequence
 rng = np.random.default_rng()
 rand_seq = np.absolute(rng.standard_normal(Test_Sample_size))
 Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
+# 2 - sine sequence
+x = np.linspace(-np.pi*10, np.pi*10, Test_Sample_size)
+Test_Sample_in = np.sin(x)
 
 # Number of head and tail buffer samples
 Paddind_Head_size = (FIR_Coefs.size*2)-2
@@ -29,15 +33,15 @@ Test_Sample_in_spread = np.zeros(Test_Sample_size * 2 + Paddind_Head_size + Padd
 Test_Sample_in_spread[Paddind_Head_size:Paddind_Head_size + Test_Sample_size * 2:2] = Test_Sample_in
 
 # Process filter
-print(Test_Sample_in_spread)
+#print(Test_Sample_in_spread)
 for i in range(Paddind_Head_size+1, Paddind_Head_size + Test_Sample_size*2 + 1, 2):
-    print(i)
-    print(Test_Sample_in_spread[i])
+    #print(i)
+    #print(Test_Sample_in_spread[i])
     samples_after = Test_Sample_in_spread[(i+1):(i+Padding_Tail_Size+1):2]
     samples_before = Test_Sample_in_spread[(i-Paddind_Head_size-1):i:2]
 
-    print(samples_after)
-    print(samples_before)
+    #print(samples_after)
+    #print(samples_before)
     Test_Sample_out[i-1] = Test_Sample_in_spread[i-1]
     Test_Sample_out[i] = np.sum(np.multiply(np.add(samples_after, np.flip(samples_before)), FIR_Coefs))/FIR_Norm_Coef
 
