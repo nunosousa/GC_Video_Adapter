@@ -14,8 +14,8 @@ rand_seq = np.absolute(rng.standard_normal(Test_Sample_size))
 Test_Sample_in = np.floor(np.divide(rand_seq, np.amax(rand_seq))*255)
 
 # Number of head and tail buffer samples
-Paddind_Head_size = (FIR_Coefs.size*2)-1
-Padding_Tail_Size = FIR_Coefs.size*2
+Paddind_Head_size = (FIR_Coefs.size*2)-2
+Padding_Tail_Size = FIR_Coefs.size*2-1
 Padding_Head = np.ones(Paddind_Head_size)
 Padding_Tail = np.ones(Padding_Tail_Size)
 
@@ -26,16 +26,19 @@ Test_Sample_out[Paddind_Head_size + Test_Sample_size*2:] = Padding_Tail
 
 # Adjust Test vector for plotting against interpolated result
 Test_Sample_in_spread = np.zeros(Test_Sample_size * 2 + Paddind_Head_size + Padding_Tail_Size)
-print(Test_Sample_in_spread[Paddind_Head_size:2:Paddind_Head_size + Test_Sample_size * 2])
 Test_Sample_in_spread[Paddind_Head_size:Paddind_Head_size + Test_Sample_size * 2:2] = Test_Sample_in
 
 # Process filter
 print(Test_Sample_in_spread)
 for i in range(Paddind_Head_size+1, Paddind_Head_size + Test_Sample_size*2 + 1, 2):
-    samples_after = Test_Sample_in_spread[(i+1):(i+(FIR_Coefs.size*2)):2]
-    samples_before = Test_Sample_in_spread[(i-(FIR_Coefs.size*2)+1):(i-1):2]
+    print(i)
+    print(Test_Sample_in_spread[i])
+    samples_after = Test_Sample_in_spread[(i+1):(i+Padding_Tail_Size+1):2]
+    samples_before = Test_Sample_in_spread[(i-Paddind_Head_size-1):i:2]
+
+    print(samples_after)
     print(samples_before)
-    Test_Sample_out[i] = 0.1
+    #Test_Sample_out[i] = np.add(samples_after, np.flip(samples_before))
 
 # Plots
 pyplot.figure(1)
