@@ -64,7 +64,7 @@ begin
 				end if;
 			when st2 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
 				CbCr_vdata_store <= vdata_in;
-				new_state <= s3;
+				new_state <= st3;
 			when st3 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
