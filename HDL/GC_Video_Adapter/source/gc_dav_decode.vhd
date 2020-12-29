@@ -53,17 +53,17 @@ begin
 	begin
 		vphase_store <= vphase;
 		case previous_state is
-			when st0 =>
+			when st0 =>		-- Reset state. Not in synch with incoming data.
 				new_state <= st1;
-			when st1 =>
-				if vphase /= vphase_store then
+			when st1 =>		-- Detect first pair of color data. Synch with incoming data.
+				if vphase /= vphase_store then	-- New color data. Get Y.
 					Y_vdata_store <= vdata_in;
 					new_state <= st2;
 				end if;
-			when st2 =>
+			when st2 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
 				CbCr_vdata_store <= vdata_in;
 				new_state <= s3;
-			when st3 =>
+			when st3 =>		-- Get new Y and set video output if 30kHz video, or get CrCb if 15kHz video.
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
 					CbCr_vdata_out <= CbCr_vdata_store;
@@ -73,9 +73,9 @@ begin
 					CbCr_vdata_store <= vdata_in;
 					new_state <= st4;
 				end if;
-			when st4 =>
+			when st4 =>		-- 15kHz video. Still same CbCr.
 				new_state <= st5;
-			when st5 =>
+			when st5 =>		-- Get new Y and set video output if 15kHz video, else synch fault detected and go back to st0.
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
 					CbCr_vdata_out <= CbCr_vdata_store;
