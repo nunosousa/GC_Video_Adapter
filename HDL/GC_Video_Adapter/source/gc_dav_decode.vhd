@@ -8,10 +8,11 @@ use ieee.std_logic_1164.all;
 entity gc_dav_decode is
 
 	port(
-		vclk			: in	std_logic;
+		vclk_in			: in	std_logic;
 		vphase			: in	std_logic;
 		vdata_in		: in	std_logic_vector(7 downto 0);
 		reset			: in	std_logic;
+		pclk_out		: out	std_logic;
 		Y_vdata_out		: out	std_logic_vector(7 downto 0);
 		CbCr_vdata_out	: out	std_logic_vector(7 downto 0)
 	);
@@ -30,12 +31,12 @@ architecture rtl of gc_dav_decode is
 	-- Register to hold the current vphase state
 	signal vphase_store		: std_logic;
 	
+	-- Register to hold the video clock state
+	signal pclk_store		: std_logic	:= '0';
+	
 	-- Register to store the current video data
 	signal Y_vdata_store	: std_logic_vector(7 downto 0);
 	signal CbCr_vdata_store	: std_logic_vector(7 downto 0);
-	
-	-- Register to hold the current video frequency
-	--signal is_30kHz_video	: std_logic;
 
 begin
 	-- Logic to advance to the next state
@@ -45,6 +46,7 @@ begin
 			previous_state <= st0;
 		elsif (rising_edge(vclk)) then
 			previous_state <= new_state;
+			pclk_out <= pclk_store;
 		end if;
 	end process;
 	
@@ -67,6 +69,7 @@ begin
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
 					CbCr_vdata_out <= CbCr_vdata_store;
+					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					Y_vdata_store <= vdata_in;
 					new_state <= st2;
 				else
@@ -79,6 +82,7 @@ begin
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
 					CbCr_vdata_out <= CbCr_vdata_store;
+					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					Y_vdata_store <= vdata_in;
 					new_state <= st2;
 				else
