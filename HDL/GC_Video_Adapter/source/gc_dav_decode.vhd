@@ -21,74 +21,64 @@ end entity;
 architecture rtl of gc_dav_decode is
 
 	-- Build an enumerated type for the state machine
-	type state_type is (s0, s1, s2, s3, s4, s5);
+	type state_type is (st0, st1, st2, st3, st4, st5);
 	
-	-- Register to hold the current state
-	signal state			: state_type;
+	-- Register to hold the previous and current states
+	signal previous_state	: state_type;
+	signal new_state		: state_type;
 	
 	-- Register to hold the current vphase state
-	variable vphase_store	: std_logic;
+	signal vphase_store		: std_logic;
 	
 	-- Register to store the current video data
-	variable Y_vdata_store		: std_logic_vector(7 downto 0);
-	variable CbCr_vdata_store	: std_logic_vector(7 downto 0);
+	signal Y_vdata_store	: std_logic_vector(7 downto 0);
+	signal CbCr_vdata_store	: std_logic_vector(7 downto 0);
 	
 	-- Register to hold the current video frequency
 	--signal is_30kHz_video	: std_logic;
 
 begin
 	-- Logic to advance to the next state
-	process (vclk, reset)
+	sync_proc: process (vclk, reset)
 	begin
 		if reset = '1' then
-			state <= s0;
+			previous_state <= st0;
 		elsif (rising_edge(vclk)) then
-			vphase_store <= vphase;
-			
-			case state is
-				when s0 =>
-					state <= s1;
-				when s1 =>
-					if vphase /= vphase_store then
-						state <= s2;
-					end if;
-				when s2 =>
-					state <= s3;
-				when s3 =>
-					if vphase /= vphase_store then
-						state <= s2;
-					else
-						state <= s4;
-					end if;
-				when s4 =>
-					state <= s5;
-				when s5 =>
-					if vphase /= vphase_store then
-						state <= s2;
-					else
-						state <= s0;
-					end if;
-			end case;
+			previous_state <= new_state;
 		end if;
 	end process;
 	
 	-- Output depends solely on the current state
-	process (state)
+	comb_proc: process (state, vphase)
 	begin
-	
-		case state is
-			when s0 =>
-				-- nothing
-			when s1 =>
-				Y_vdata_store <= vdata_in;
-			when s2 =>
+		vphase_store <= vphase;
+		case previous_state is
+			when st0 =>
+				new_state <= st1;
+			when st1 =>
+				if vphase /= vphase_store then
+					Y_vdata_store <= vdata_in;
+					new_state <= st2;
+				end if;
+			when st2 =>
 				CbCr_vdata_store <= vdata_in;
-			when s3 =>
-				data_out <= "11";
-			when s4 =>
-				data_out <= "10";
-			when s5 =>
-				data_out <= "11";
+				new_state <= s3;
+			when st3 =>
+				if vphase /= vphase_store then
+					Y_vdata_store <= vdata_in;
+					new_state <= st2;
+				else
+					CbCr_vdata_store <= vdata_in;
+					new_state <= st4;
+				end if;
+			when st4 =>
+				new_state <= st5;
+			when st5 =>
+				if vphase /= vphase_store then
+					new_state <= st2;
+				else
+					new_state <= st0;
+				end if;
 		end case;
 	end process;
 	
