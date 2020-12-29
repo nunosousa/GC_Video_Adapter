@@ -3,6 +3,9 @@
     <Options/>
     <Implementation title="GC_Video_Adapter" dir="GC_Video_Adapter" description="GC_Video_Adapter" synthesis="lse" default_strategy="Strategy1">
         <Options/>
+        <Source name="GC_Video_Adapter/source/gc_dav_decode.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="GC_Video_Adapter.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
