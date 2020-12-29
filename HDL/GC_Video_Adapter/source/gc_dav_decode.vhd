@@ -22,7 +22,7 @@ end entity;
 architecture rtl of gc_dv_decode is
 
 	-- Build an enumerated type for the state machine
-	type state_type is (st0, st1, st2, st3, st4, st5);
+	type state_type is (st0, st1, st2, st3, st4, st5, st6, st7, st8, st9);
 	
 	-- Register to hold the previous and current states
 	signal previous_state	: state_type;
@@ -60,7 +60,11 @@ begin
 			when st1 =>		-- Detect first pair of color data. Synch with incoming data.
 				if vphase /= vphase_store then	-- New color data. Get Y.
 					Y_vdata_store <= vdata_in;
-					new_state <= st2;
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
 				end if;
 			when st2 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
 				CbCr_vdata_store <= vdata_in;
@@ -71,7 +75,11 @@ begin
 					CbCr_vdata_out <= CbCr_vdata_store;
 					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					Y_vdata_store <= vdata_in;
-					new_state <= st2;
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
 				else
 					CbCr_vdata_store <= vdata_in;
 					new_state <= st4;
@@ -84,7 +92,43 @@ begin
 					CbCr_vdata_out <= CbCr_vdata_store;
 					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					Y_vdata_store <= vdata_in;
-					new_state <= st2;
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
+				else
+					new_state <= st0;
+				end if;
+			when st6 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
+				CbCr_vdata_store <= vdata_in;
+				new_state <= st7;
+			when st7 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
+				if vphase /= vphase_store then
+					Y_vdata_out <= x"00";
+					CbCr_vdata_out <= x"80";
+					pclk_store <= not pclk_store;	-- Toggle pixel clock
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
+				else
+					CbCr_vdata_store <= vdata_in;
+					new_state <= st8;
+				end if;
+			when st8 =>		-- 15kHz video. Still same CbCr.
+				new_state <= st9;
+			when st9 =>		-- Get new Y and set video output if 15kHz video, else synch fault detected and go back to st0.
+				if vphase /= vphase_store then
+					Y_vdata_out <= x"00";
+					CbCr_vdata_out <= x"80";
+					pclk_store <= not pclk_store;	-- Toggle pixel clock
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
 				else
 					new_state <= st0;
 				end if;
