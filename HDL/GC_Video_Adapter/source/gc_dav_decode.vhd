@@ -14,7 +14,8 @@ entity gc_dv_decode is
 		reset			: in	std_logic;
 		pclk_out		: out	std_logic;
 		Y_vdata_out		: out	std_logic_vector(7 downto 0);
-		CbCr_vdata_out	: out	std_logic_vector(7 downto 0)
+		CbCr_vdata_out	: out	std_logic_vector(7 downto 0);
+		flags_out		: out	std_logic_vector(7 downto 0)
 	);
 	
 end entity;
@@ -37,6 +38,7 @@ architecture rtl of gc_dv_decode is
 	-- Register to store the current video data
 	signal Y_vdata_store	: std_logic_vector(7 downto 0);
 	signal CbCr_vdata_store	: std_logic_vector(7 downto 0);
+	signal flags_store		: std_logic_vector(7 downto 0);
 
 begin
 	-- Logic to advance to the next state and update pixel clock
@@ -101,12 +103,13 @@ begin
 					new_state <= st0;
 				end if;
 			when st6 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
-				CbCr_vdata_store <= vdata_in;
+				flags_store <= vdata_in;
 				new_state <= st7;
 			when st7 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
 				if vphase /= vphase_store then
 					Y_vdata_out <= x"00";
 					CbCr_vdata_out <= x"80";
+					flags_out <= flags_store;
 					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					if vdata_in /= x"00" then
 						new_state <= st2;
@@ -114,7 +117,7 @@ begin
 						new_state <= st6;
 					end if;
 				else
-					CbCr_vdata_store <= vdata_in;
+					flags_store <= vdata_in;
 					new_state <= st8;
 				end if;
 			when st8 =>		-- 15kHz video. Still same CbCr.
@@ -123,6 +126,7 @@ begin
 				if vphase /= vphase_store then
 					Y_vdata_out <= x"00";
 					CbCr_vdata_out <= x"80";
+					flags_out <= flags_store;
 					pclk_store <= not pclk_store;	-- Toggle pixel clock
 					if vdata_in /= x"00" then
 						new_state <= st2;
