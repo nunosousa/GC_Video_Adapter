@@ -2,11 +2,31 @@ import numpy as np
 from scipy import signal
 import matplotlib.pyplot as pyplot
 
+### Sinc filter design
+# Define the parameters
+fc = 1000
+b = 100
+N = int(np.ceil((4 / b)))
+#if not N % 2: N += 1  # Make sure that N is odd.
+n = np.arange(N)
+# Compute sinc filter.
+h = np.sinc(2 * fc * (n - (N - 1) / 2.))
+# Compute Blackman window.
+w = np.blackman(N)
+# Multiply sinc filter with window.
+h = h * w
+# Normalize to get unity gain.
+h_unity = h / np.sum(h)
+print(h_unity)
+
 # FIR filter coeficients used on the Interpolation filter
-filter_scenario = 2
+filter_scenario = 1
 if filter_scenario == 1:
     FIR_Coefs = np.array([1300, -420, 236, -152, 104, -70, 48, -32, 20, -12, 6, -4])
     FIR_Norm_Coef = 2048
+
+    FIR_Coefs = h_unity
+    FIR_Norm_Coef = 1
 else:
     FIR_Coefs = np.array([1])
     FIR_Norm_Coef = 2
@@ -15,7 +35,7 @@ else:
 Test_Sample_size = 200
 
 # Test vector
-sample_data_scenario = 4
+sample_data_scenario = 2
 if sample_data_scenario == 1:
     # 1 - Random sequence
     rng = np.random.default_rng()
