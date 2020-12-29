@@ -39,18 +39,18 @@ architecture rtl of gc_dav_decode is
 	signal CbCr_vdata_store	: std_logic_vector(7 downto 0);
 
 begin
-	-- Logic to advance to the next state
-	sync_proc: process (vclk, reset)
+	-- Logic to advance to the next state and update pixel clock
+	sync_proc: process (vclk_in, reset)
 	begin
 		if reset = '1' then
 			previous_state <= st0;
-		elsif (rising_edge(vclk)) then
+		elsif (rising_edge(vclk_in)) then
 			previous_state <= new_state;
 			pclk_out <= pclk_store;
 		end if;
 	end process;
 	
-	-- Output depends solely on the state
+	-- Logic to determine output values
 	comb_proc: process (previous_state, vphase)
 	begin
 		vphase_store <= vphase;
@@ -65,7 +65,7 @@ begin
 			when st2 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
 				CbCr_vdata_store <= vdata_in;
 				new_state <= s3;
-			when st3 =>		-- Get new Y and set video output if 30kHz video, or get CrCb if 15kHz video.
+			when st3 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
 				if vphase /= vphase_store then
 					Y_vdata_out <= Y_vdata_store;
 					CbCr_vdata_out <= CbCr_vdata_store;
