@@ -5,7 +5,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity gc_dav_decode is
+entity gc_dv_decode is
 
 	port(
 		vclk_in			: in	std_logic;
@@ -19,7 +19,7 @@ entity gc_dav_decode is
 	
 end entity;
 
-architecture rtl of gc_dav_decode is
+architecture rtl of gc_dv_decode is
 
 	-- Build an enumerated type for the state machine
 	type state_type is (st0, st1, st2, st3, st4, st5);
