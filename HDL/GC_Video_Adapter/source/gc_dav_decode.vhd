@@ -48,8 +48,8 @@ begin
 		end if;
 	end process;
 	
-	-- Output depends solely on the current state
-	comb_proc: process (state, vphase)
+	-- Output depends solely on the state
+	comb_proc: process (previous_state, vphase)
 	begin
 		vphase_store <= vphase;
 		case previous_state is
@@ -65,6 +65,8 @@ begin
 				new_state <= s3;
 			when st3 =>
 				if vphase /= vphase_store then
+					Y_vdata_out <= Y_vdata_store;
+					CbCr_vdata_out <= CbCr_vdata_store;
 					Y_vdata_store <= vdata_in;
 					new_state <= st2;
 				else
@@ -75,6 +77,9 @@ begin
 				new_state <= st5;
 			when st5 =>
 				if vphase /= vphase_store then
+					Y_vdata_out <= Y_vdata_store;
+					CbCr_vdata_out <= CbCr_vdata_store;
+					Y_vdata_store <= vdata_in;
 					new_state <= st2;
 				else
 					new_state <= st0;
