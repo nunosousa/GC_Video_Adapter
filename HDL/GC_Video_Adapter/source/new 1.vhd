@@ -47,6 +47,13 @@ architecture behav of gc_dv_decode is
 	
 	signal vclk_count			: natural range 0 to 3 := 0; -- check this range
 	signal vphase_event			: std_logic := 0;
+	
+	-- Build an enumerated type for the state machine
+	type state_type is (st0, st1);
+	
+	-- Register to hold the previous and current states
+	signal previous_state	: state_type;
+	signal new_state		: state_type;
 
 begin
 
@@ -86,24 +93,33 @@ begin
 	end process;
 
 
-	-- Detect video frequency and vphase changes (start of new color sample)
-	vphase_process: process (vclk)
-		variable vphase_store : std_logic;
-		-- Build an enumerated type for the state machine
-		type state_type is (st0, st1);
-		-- Register to hold the previous and current states
-		variable previous_state	: state_type;
-		variable new_state		: state_type;
-	
+	-- Logic to advance to the next state and update pixel clock
+	sync_proc: process (vclk, reset)
 	begin
-		if (rising_edge(vclk)) then
-			vclk_count <= vclk_count + 1;
-			vphase_store := vphase;
-			
-			if (vphase /= vphase_store) then
-				vphase_event <= '1';
-			end if;
+		if reset = '1' then
+			previous_state <= st0;
+		elsif (rising_edge(vclk)) then
+			previous_state <= new_state;
 		end if;
+	end process;
+	
+	-- Logic to determine output values
+	comb_proc: process (previous_state, vphase)
+	begin
+		vphase_store <= vphase;
+		case previous_state is
+			when st0 =>		-- Reset state. Not in synch with incoming data.
+				new_state <= st1;
+			when st1 =>		-- Detect first pair of color data. Synch with incoming data.
+				if vphase /= vphase_store then	-- New color data. Get Y.
+					Y_vdata_store <= vdata_in;
+					if vdata_in /= x"00" then
+						new_state <= st2;
+					else
+						new_state <= st6;
+					end if;
+				end if;
+		end case;
 	end process;
 
 end behav;
