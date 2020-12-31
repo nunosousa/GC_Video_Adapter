@@ -93,7 +93,7 @@ begin
 	end process;
 
 
-	-- Logic to advance to the next state and update pixel clock
+	-- Logic to advance to the next state
 	sync_proc: process (vclk, reset)
 	begin
 		if reset = '1' then
@@ -103,16 +103,17 @@ begin
 		end if;
 	end process;
 	
-	-- Logic to determine output values
+	-- Logic to 
 	comb_proc: process (previous_state, vphase)
 	begin
 		vphase_store <= vphase;
 		case previous_state is
-			when st0 =>		-- Reset state. Not in synch with incoming data.
+			when st0 =>
 				new_state <= st1;
-			when st1 =>		-- Detect first pair of color data. Synch with incoming data.
-				if vphase /= vphase_store then	-- New color data. Get Y.
+			when st1 =>
+				if vphase /= vphase_store then
 					Y_vdata_store <= vdata_in;
+					
 					if vdata_in /= x"00" then
 						new_state <= st2;
 					else
