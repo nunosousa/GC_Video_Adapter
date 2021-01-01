@@ -48,7 +48,7 @@ architecture behav of gc_dv_decode is
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
 	signal vclk_count			: natural range 0 to 5 := 0; -- check this range!!!!
-	signal vphase_event			: std_logic := 0;
+	signal valid_sample			: std_logic := 0;
 
 begin
 
@@ -66,58 +66,65 @@ begin
 	-- Main circular buffer logic
 	vdata_buffer_process : process(vclk)
 	begin
-		if rising_edge(vclk) then
-			if reset = '1' then	-- Reset buffer
+		if (rising_edge(vclk)) then
+			if (reset = '1') then	-- Reset buffer
 				head <= 0;
 				tail <= 0;
-			else				-- Update head and tail counters and store new vdata sample
+			else					-- Update head and tail counters and store new vdata sample
 				incr_index(head);
 				vdata_buffer(head) <= vdata;
 				
-				if full = '1' then
+				if (full = '1') then
 					incr_index(tail);
 				end if;
-			end if;
-		end if;
+			end if;	-- if (reset = '1')
+		end if;	-- if rising_edge(vclk)
 	end process;
 
 
 	-- Logic to detect that a new color sample was received (by checking when vphase changes polarity)
 	vphase_process: process(vclk)
-		variable is_first	: std_logic := 1;
+		variable tbd	: std_logic := '1';
 	begin
 		if (rising_edge(vclk)) then
-			if reset = '1' then
+			if (reset = '1') then
 				vclk_count <= 0;
-				is_first := 1;
+				valid_sample <= '0';
 			else
 				vphase_store <= vphase;
 				vclk_count <= vclk_count + 1;
 			
-				if (is_first = '1') then
-					is_first <= '0';
-				else
+				if (fill_count >= 2) then
 					if (vphase /= vphase_store) then
-						vphase_event <= '1';
-					end if;
-				end if;
-			end if;
-		end if;
+						vclk_count <= 0;
+						
+						if (vclk_count = 2) then	-- progresive video (<Y0><CbCr0><Y1><CbCr1>)
+							valid_sample <= '1';
+							Y_vdata <= get_index(0);
+							CbCr_vdata <= get_index(1);
+						elsif (vclk_count = 4) then	-- interlaced video (<Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>)
+							valid_sample <= '1';
+							Y_vdata <= get_index(0);
+							CbCr_vdata <= get_index(2);
+						end if;
+					end if;	-- if (vphase /= vphase_store)
+				end if;	-- if (fill_count >= 2)
+			end if;	-- if (reset = '1')
+		end if;	-- if (rising_edge(vclk))
 	end process;
 
 
 	-- Logic to process and get a color sample
-	sample_process: process(vphase_event)
+	sample_process: process(valid_sample)
 		variable tbd	: std_logic := 1;
 	begin
-		if (vphase_event = 1) then
-			vphase_event <= 0;
-			vclk_count <= 0;
+		if (valid_sample = 1) then
+			valid_sample <= 0;
 			
-			if (vclk_count = 2) then
+			if (Y_vdata = x"00") then	-- progresive video
 				--Y <= get_index();
 				--CbCr <= get_index();
-			elsif (vclk_count = 4) then
+			else									-- interlaced video
 				--Y <= get_index();
 				--CbCr <= get_index();
 			end if;
