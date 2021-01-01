@@ -29,8 +29,8 @@ architecture behav of gc_dv_decode is
 	signal vdata_buffer			: vdata_buffer_type;
 	
 	subtype index_type is natural range vdata_buffer_type'range;
-	signal head					: index_type;
-	signal tail					: index_type;
+	signal head					: index_type := 0;
+	signal tail					: index_type := 0;
 
 	signal full					: std_logic;
 	signal fill_count			: natural range VDATA_BUFFER_DEPTH - 1 downto 0;
@@ -47,15 +47,12 @@ architecture behav of gc_dv_decode is
 	
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
-	signal vclk_count			: natural range 0 to 4 := 0; -- check this range
+	signal vclk_count			: natural range 0 to 5 := 0; -- check this range!!!!
 	signal vphase_event			: std_logic := 0;
 
 begin
 
 	-- vdata circular buffer logic
-	-- Set the flags
-	full <= '1' when fill_count >= VDATA_BUFFER_DEPTH - 1 else '0';
-	
 	-- Update de sample counter
 	if head < tail then
 		fill_count <= head - tail + VDATA_BUFFER_DEPTH;
@@ -63,66 +60,68 @@ begin
 		fill_count <= head - tail;
 	end if;
 	
+	-- Set the full flag
+	full <= '1' when fill_count >= VDATA_BUFFER_DEPTH - 1 else '0';
+	
 	-- Main circular buffer logic
 	vdata_buffer_process : process(vclk)
 	begin
 		if rising_edge(vclk) then
-			-- head
-			if reset = '1' then
+			if reset = '1' then	-- Reset buffer
 				head <= 0;
-			else
-				incr_index(head);
-			end if;
-			
-			-- tail
-			if rst = '1' then
 				tail <= 0;
-			else
+			else				-- Update head and tail counters and store new vdata sample
+				incr_index(head);
+				vdata_buffer(head) <= vdata;
+				
 				if full = '1' then
 					incr_index(tail);
 				end if;
 			end if;
-			
-			-- contents
-			vdata_buffer(head) <= vdata;
 		end if;
 	end process;
 
 
-	-- Logic to detect that a new color sample was received (by checking when vphase changes)
-	vphase_process: process (vclk)
+	-- Logic to detect that a new color sample was received (by checking when vphase changes polarity)
+	vphase_process: process(vclk)
 		variable is_first	: std_logic := 1;
 	begin
 		if (rising_edge(vclk)) then
-			vphase_store <= vphase;
-			vclk_count <= vclk_count + 1;
+			if reset = '1' then
+				vclk_count <= 0;
+				is_first := 1;
+			else
+				vphase_store <= vphase;
+				vclk_count <= vclk_count + 1;
 			
-			case is_first is
-				when '1' =>
+				if (is_first = '1') then
 					is_first <= '0';
-				when '0' =>
+				else
 					if (vphase /= vphase_store) then
 						vphase_event <= '1';
 					end if;
-			end case;
+				end if;
+			end if;
 		end if;
 	end process;
 
 
-	-- Logic to 
-	vphase_process: process (vphase_event)
+	-- Logic to process and get a color sample
+	sample_process: process(vphase_event)
+		variable tbd	: std_logic := 1;
 	begin
 		if (vphase_event = 1) then
 			vphase_event <= 0;
+			vclk_count <= 0;
 			
-			if ((fill_count >= 2) and (vclk_count = 2)) then
+			if (vclk_count = 2) then
 				--Y <= get_index();
 				--CbCr <= get_index();
-			elsif ((fill_count = 4) and (vclk_count = 4)) then
+			elsif (vclk_count = 4) then
 				--Y <= get_index();
 				--CbCr <= get_index();
 			end if;
-			
+				
 		end if;
 	end process;
 
