@@ -26,11 +26,11 @@ fp-info-cache
 *.csv
 
 # ignore Lattice Diamond files
-HDL/._Real_._Math_.vhd
-HDL/.spread_sheet.ini
-HDL/.spreadsheet_view.ini
-HDL/*/**/*
-HDL/*.xml
-HDL/*.html
-HDL/*/**/*.lpf
-HDL/*/**/*.ldc
+#HDL/._Real_._Math_.vhd
+#HDL/.spread_sheet.ini
+#HDL/.spreadsheet_view.ini
+#HDL/*/**/*
+#HDL/*.xml
+#HDL/*.html
+#HDL/*/**/*.lpf
+#HDL/*/**/*.ldc

@@ -23,37 +23,9 @@ end entity;
 
 architecture behav of gc_dv_decode is
 
-	-- Build incoming vdata circular buffer
-	constant VDATA_BUFFER_DEPTH	: natural := 6;
-	type vdata_buffer_type is array (0 to VDATA_BUFFER_DEPTH - 1) of std_logic_vector(7 downto 0);
+	-- Build incoming vdata buffer
+	type vdata_buffer_type is array (0 to 3) of std_logic_vector(7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
-	
-	subtype index_type is natural range vdata_buffer_type'range;
-	signal head					: index_type := 0;
-	signal tail					: index_type := 0;
-
-	signal full					: std_logic;
-	signal fill_count			: natural range VDATA_BUFFER_DEPTH - 1 downto 0;
-
-	-- Head and Tail increment and wrap
-	procedure incr_index(signal index : inout index_type) is
-	begin
-		if index = index_type'high then
-			index <= index_type'low;
-		else
-			index <= index + 1;
-		end if;
-	end procedure;
-	
-	-- Get a sample from the circular buffer, index positions offset from the head to the tail
-	function get_sample(index : in index_type) return std_logic_vector(7 downto 0)) is
-	begin
-		if (index ) then
-			return;
-		else
-			return;
-		end if;
-	end function;
 	
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
@@ -62,32 +34,18 @@ architecture behav of gc_dv_decode is
 
 begin
 
-	-- vdata circular buffer logic
-	-- Update de sample counter
-	if head < tail then
-		fill_count <= head - tail + VDATA_BUFFER_DEPTH;
-	else
-		fill_count <= head - tail;
-	end if;
-	
-	-- Set the full flag
-	full <= '1' when fill_count >= VDATA_BUFFER_DEPTH - 1 else '0';
-	
-	-- Main circular buffer logic
+	-- vdata buffer logic
 	vdata_buffer_process : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			if (reset = '1') then	-- Reset buffer
-				head <= 0;
-				tail <= 0;
-			else					-- Update head and tail counters and store new vdata sample
-				incr_index(head);
-				vdata_buffer(head) <= vdata;
+			if (reset = '0') then	-- Store new vdata sample and shift samples
+				vdata_buffer(0) <= vdata_buffer(1);
+				vdata_buffer(1) <= vdata_buffer(2);
+				vdata_buffer(2) <= vdata_buffer(3);
+				vdata_buffer(3) <= vdata;
 				
-				if (full = '1') then
-					incr_index(tail);
-				end if;
-			end if;	-- if (reset = '1')
+				vclk_count <= vclk_count + 1;
+			end if;	-- if (reset = '0')
 		end if;	-- if rising_edge(vclk)
 	end process;
 
