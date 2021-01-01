@@ -45,15 +45,11 @@ architecture behav of gc_dv_decode is
 		end if;
 	end procedure;
 	
+	-- Register to hold the current vphase state
+	signal vphase_store			: std_logic;
+	
 	signal vclk_count			: natural range 0 to 3 := 0; -- check this range
 	signal vphase_event			: std_logic := 0;
-	
-	-- Build an enumerated type for the state machine
-	type state_type is (st0, st1);
-	
-	-- Register to hold the previous and current states
-	signal previous_state	: state_type;
-	signal new_state		: state_type;
 
 begin
 
@@ -67,7 +63,8 @@ begin
 	else
 		fill_count <= head - tail;
 	end if;
-
+	
+	-- Main circular buffer logic
 	vdata_buffer_process : process(vclk)
 	begin
 		if rising_edge(vclk) then
@@ -93,34 +90,28 @@ begin
 	end process;
 
 
-	-- Logic to advance to the next state
-	sync_proc: process (vclk, reset)
+	-- Logic to detect that new color sample was received (by checking when vphase changes)
+	vphase_process: process (vclk)
+		variable is_first	: std_logic := 1;
 	begin
-		if reset = '1' then
-			previous_state <= st0;
-		elsif (rising_edge(vclk)) then
-			previous_state <= new_state;
+		if (rising_edge(vclk)) then
+			vphase_store <= vphase;
+			case is_first is
+				when '1' =>
+					is_first <= '0';
+				when '0' =>
+					if (vphase /= vphase_store) then
+						vphase_event <= '1';
+					end if;
+			end case;
 		end if;
 	end process;
-	
+
+
 	-- Logic to 
-	comb_proc: process (previous_state, vphase)
+	vphase_process: process (vphase_event)
 	begin
-		vphase_store <= vphase;
-		case previous_state is
-			when st0 =>
-				new_state <= st1;
-			when st1 =>
-				if vphase /= vphase_store then
-					Y_vdata_store <= vdata_in;
-					
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				end if;
-		end case;
+	
 	end process;
 
 end behav;
