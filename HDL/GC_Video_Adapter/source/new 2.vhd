@@ -29,7 +29,7 @@ architecture behav of gc_dv_decode is
 	
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
-	signal vclk_count			: natural range 0 to 5 := 0; -- check this range!!!!
+	signal vsample_count		: natural range 0 to 4 := 0; -- check this range!!!!
 	signal valid_sample			: std_logic := 0;
 
 begin
@@ -38,13 +38,15 @@ begin
 	vdata_buffer_process : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			if (reset = '0') then	-- Store new vdata sample and shift samples
+			if (reset = '1') then	-- Reset sample counter
+				vsample_count <= 0;
+			else					-- Store new vdata sample and shift samples
 				vdata_buffer(0) <= vdata_buffer(1);
 				vdata_buffer(1) <= vdata_buffer(2);
 				vdata_buffer(2) <= vdata_buffer(3);
 				vdata_buffer(3) <= vdata;
 				
-				vclk_count <= vclk_count + 1;
+				vsample_count <= vsample_count + 1;
 			end if;	-- if (reset = '0')
 		end if;	-- if rising_edge(vclk)
 	end process;
@@ -56,27 +58,23 @@ begin
 	begin
 		if (rising_edge(vclk)) then
 			if (reset = '1') then
-				vclk_count <= 0;
 				valid_sample <= '0';
 			else
 				vphase_store <= vphase;
-				vclk_count <= vclk_count + 1;
 			
-				if (fill_count >= 2) then
-					if (vphase /= vphase_store) then
-						vclk_count <= 0;
-						
-						if (vclk_count = 2) then	-- progresive video (vdata: <Y0><CbCr0><Y1><CbCr1>...)
-							valid_sample <= '1';
-							Y_vdata <= get_sample(0);
-							CbCr_vdata <= get_sample(1);
-						elsif (vclk_count = 4) then	-- interlaced video (vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...)
-							valid_sample <= '1';
-							Y_vdata <= get_sample(0);
-							CbCr_vdata <= get_sample(2);
-						end if;
-					end if;	-- if (vphase /= vphase_store)
-				end if;	-- if (fill_count >= 2)
+				if (vphase /= vphase_store) then
+					vsample_count <= 0;
+					
+					if (vsample_count = 2) then		-- progresive video (vdata: <Y0><CbCr0><Y1><CbCr1>...)
+						valid_sample <= '1';
+						Y_vdata <= vdata_buffer(2);
+						CbCr_vdata <= vdata_buffer(3);
+					elsif (vsample_count = 4) then	-- interlaced video (vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...)
+						valid_sample <= '1';
+						Y_vdata <= vdata_buffer(0);
+						CbCr_vdata <= vdata_buffer(2);
+					end if;
+				end if;	-- if (vphase /= vphase_store)
 			end if;	-- if (reset = '1')
 		end if;	-- if (rising_edge(vclk))
 	end process;
