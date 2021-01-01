@@ -24,7 +24,7 @@ end entity;
 architecture behav of gc_dv_decode is
 
 	-- Build incoming vdata circular buffer
-	constant VDATA_BUFFER_DEPTH	: natural := 5;
+	constant VDATA_BUFFER_DEPTH	: natural := 6;
 	type vdata_buffer_type is array (0 to VDATA_BUFFER_DEPTH - 1) of std_logic_vector(7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
 	
@@ -47,8 +47,7 @@ architecture behav of gc_dv_decode is
 	
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
-	
-	signal vclk_count			: natural range 0 to 3 := 0; -- check this range
+	signal vclk_count			: natural range 0 to 4 := 0; -- check this range
 	signal vphase_event			: std_logic := 0;
 
 begin
@@ -90,12 +89,14 @@ begin
 	end process;
 
 
-	-- Logic to detect that new color sample was received (by checking when vphase changes)
+	-- Logic to detect that a new color sample was received (by checking when vphase changes)
 	vphase_process: process (vclk)
 		variable is_first	: std_logic := 1;
 	begin
 		if (rising_edge(vclk)) then
 			vphase_store <= vphase;
+			vclk_count <= vclk_count + 1;
+			
 			case is_first is
 				when '1' =>
 					is_first <= '0';
@@ -111,7 +112,18 @@ begin
 	-- Logic to 
 	vphase_process: process (vphase_event)
 	begin
-	
+		if (vphase_event = 1) then
+			vphase_event <= 0;
+			
+			if ((fill_count >= 2) and (vclk_count = 2)) then
+				--Y <= get_index();
+				--CbCr <= get_index();
+			elsif ((fill_count = 4) and (vclk_count = 4)) then
+				--Y <= get_index();
+				--CbCr <= get_index();
+			end if;
+			
+		end if;
 	end process;
 
 end behav;
