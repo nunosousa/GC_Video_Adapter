@@ -38,6 +38,7 @@ begin
 		variable valid_sample	: std_logic := '0';
 		variable Y_sample		: std_logic_vector(7 downto 0);
 		variable CbCr_sample	: std_logic_vector(7 downto 0);
+		variable is_Cr_sample	: std_logic := '0';
 
 	begin
 		if (rising_edge(vclk)) then
@@ -86,12 +87,16 @@ begin
 							V_sync <= '0';
 							C_sync <= '0';
 							Blanking <= '0';
-						end if;
+							
+							if (vphase = '1') then
+								is_Cr_sample := '1';
+							else
+								is_Cr_sample := '0';
+							end if;	-- if (vphase = '1')
+						end if;	-- if (Y_sample = x"00")
 					end if;	-- if (valid_sample = '1')
-		
 				end if;	-- if (vphase /= vphase_store)
 			end if;	-- if (reset = '1')
 		end if;	-- if rising_edge(vclk)
 	end process;
-
 end behav;
