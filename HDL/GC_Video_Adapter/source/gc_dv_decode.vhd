@@ -6,18 +6,18 @@ use ieee.std_logic_1164.all;
 entity gc_dv_decode is
 
 	port(
-		vclk		: in	std_logic;
-		vphase		: in	std_logic;
-		vdata		: in	std_logic_vector(7 downto 0);
-		reset		: in	std_logic;
-		pclk		: out	std_logic;
-		Y_vdata		: out	std_logic_vector(7 downto 0);
-		CbCr_vdata	: out	std_logic_vector(7 downto 0);
-		is_Cr_vdata	: out	std_logic;
-		H_sync		: out	std_logic;
-		V_sync		: out	std_logic;
-		C_sync		: out	std_logic;
-		Blanking	: out	std_logic
+		vclk	: in	std_logic;
+		vphase	: in	std_logic;
+		vdata	: in	std_logic_vector(7 downto 0);
+		reset	: in	std_logic;
+		pclk	: out	std_logic;
+		Y		: out	std_logic_vector(7 downto 0);
+		CbCr	: out	std_logic_vector(7 downto 0);
+		is_Cr	: out	std_logic;
+		H_sync	: out	std_logic;
+		V_sync	: out	std_logic;
+		C_sync	: out	std_logic;
+		Blanking: out	std_logic
 	);
 	
 end entity;
@@ -74,24 +74,24 @@ begin
 						valid_sample := '0';
 						
 						if (Y_sample = x"00") then	-- blanking data
-							Y_vdata <= x"10";
-							CbCr_vdata <= x"80";
+							Y <= x"10";
+							CbCr <= x"80";
 							H_sync <= not CbCr_sample(4);
 							V_sync <= not CbCr_sample(5);
 							C_sync <= not CbCr_sample(7);
 							Blanking <= '1';
 						else						-- video sample
-							Y_vdata <= Y_sample;
-							CbCr_vdata <= CbCr_sample;
+							Y <= Y_sample;
+							CbCr <= CbCr_sample;
 							H_sync <= '0';
 							V_sync <= '0';
 							C_sync <= '0';
 							Blanking <= '0';
 							
 							if (vphase = '1') then
-								is_Cr_vdata <= '1';
+								is_Cr <= '1';
 							else
-								is_Cr_vdata <= '0';
+								is_Cr <= '0';
 							end if;	-- if (vphase = '1')
 						end if;	-- if (Y_sample = x"00")
 					end if;	-- if (valid_sample = '1')
