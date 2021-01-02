@@ -1,6 +1,4 @@
--- A Moore machine's outputs are dependent only on the current state.
--- The output is written only when the state changes.  (State
--- transitions are synchronous.)
+-- file: gc_dv_decode.vhd
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -8,135 +6,101 @@ use ieee.std_logic_1164.all;
 entity gc_dv_decode is
 
 	port(
-		vclk_in			: in	std_logic;
-		vphase			: in	std_logic;
-		vdata_in		: in	std_logic_vector(7 downto 0);
-		reset			: in	std_logic;
-		pclk_out		: out	std_logic;
-		Y_vdata_out		: out	std_logic_vector(7 downto 0);
-		CbCr_vdata_out	: out	std_logic_vector(7 downto 0);
-		flags_out		: out	std_logic_vector(7 downto 0)
+		vclk		: in	std_logic;
+		vphase		: in	std_logic;
+		vdata		: in	std_logic_vector(7 downto 0);
+		reset		: in	std_logic;
+		pclk		: out	std_logic;
+		Y_vdata		: out	std_logic_vector(7 downto 0);
+		CbCr_vdata	: out	std_logic_vector(7 downto 0);
+		H_sync		: out	std_logic;
+		V_sync		: out	std_logic;
+		C_sync		: out	std_logic;
+		Blanking	: out	std_logic
 	);
 	
 end entity;
 
-architecture rtl of gc_dv_decode is
+architecture behav of gc_dv_decode is
 
-	-- Build an enumerated type for the state machine
-	type state_type is (st0, st1, st2, st3, st4, st5, st6, st7, st8, st9);
-	
-	-- Register to hold the previous and current states
-	signal previous_state	: state_type;
-	signal new_state		: state_type;
+	-- Build incoming vdata buffer
+	type vdata_buffer_type is array (0 to 3) of std_logic_vector(7 downto 0);
+	signal vdata_buffer			: vdata_buffer_type;
 	
 	-- Register to hold the current vphase state
-	signal vphase_store		: std_logic;
-	
-	-- Register to hold the video clock state
-	signal pclk_store		: std_logic	:= '0';
-	
-	-- Register to store the current video data
-	signal Y_vdata_store	: std_logic_vector(7 downto 0);
-	signal CbCr_vdata_store	: std_logic_vector(7 downto 0);
-	signal flags_store		: std_logic_vector(7 downto 0);
+	signal vphase_store			: std_logic;
+	signal vsample_count		: natural range 0 to 4 := 0; -- check this range!!!!
+	signal valid_sample			: std_logic := 0;
 
 begin
-	-- Logic to advance to the next state and update pixel clock
-	sync_proc: process (vclk_in, reset)
+
+	-- vdata buffer logic
+	vdata_buffer_process : process(vclk)
 	begin
-		if reset = '1' then
-			previous_state <= st0;
-		elsif (rising_edge(vclk_in)) then
-			previous_state <= new_state;
-			pclk_out <= pclk_store;
+		if (rising_edge(vclk)) then
+			if (reset = '1') then	-- Reset sample counter
+				vsample_count <= 0;
+			else					-- Store new vdata sample and shift samples
+				vdata_buffer(0) <= vdata_buffer(1);
+				vdata_buffer(1) <= vdata_buffer(2);
+				vdata_buffer(2) <= vdata_buffer(3);
+				vdata_buffer(3) <= vdata;
+				
+				vsample_count <= vsample_count + 1;
+			end if;	-- if (reset = '0')
+		end if;	-- if rising_edge(vclk)
+	end process;
+
+
+	-- Logic to detect that a new color sample was received (by checking when vphase changes polarity)
+	vphase_process: process(vclk)
+		variable tbd	: std_logic := '1';
+	begin
+		if (rising_edge(vclk)) then
+			if (reset = '1') then
+				valid_sample <= '0';
+			else
+				vphase_store <= vphase;
+			
+				if (vphase /= vphase_store) then
+					vsample_count <= 0;
+					
+					if (vsample_count = 2) then		-- progresive video (vdata: <Y0><CbCr0><Y1><CbCr1>...)
+						valid_sample <= '1';
+						Y_vdata <= vdata_buffer(2);
+						CbCr_vdata <= vdata_buffer(3);
+					elsif (vsample_count = 4) then	-- interlaced video (vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...)
+						valid_sample <= '1';
+						Y_vdata <= vdata_buffer(0);
+						CbCr_vdata <= vdata_buffer(2);
+					end if;
+				end if;	-- if (vphase /= vphase_store)
+			end if;	-- if (reset = '1')
+		end if;	-- if (rising_edge(vclk))
+	end process;
+
+
+	-- Logic to process and get a color sample
+	sample_process: process(valid_sample)
+		variable tbd	: std_logic := 1;
+	begin
+		if (valid_sample = 1) then
+			valid_sample <= 0;
+			
+			if (Y_vdata = x"00") then	-- blanking data
+				Y_vdata <= x"10";
+				CbCr_vdata <= x"80";
+				H_sync <= '1';
+				V_sync <= '1';
+				C_sync <= '1';
+				Blanking <= '1';
+			else						-- video samples
+				H_sync <= '1';
+				V_sync <= '1';
+				C_sync <= '1';
+				Blanking <= '1';
+			end if;
 		end if;
 	end process;
-	
-	-- Logic to determine output values
-	comb_proc: process (previous_state, vphase)
-	begin
-		vphase_store <= vphase;
-		case previous_state is
-			when st0 =>		-- Reset state. Not in synch with incoming data.
-				new_state <= st1;
-			when st1 =>		-- Detect first pair of color data. Synch with incoming data.
-				if vphase /= vphase_store then	-- New color data. Get Y.
-					Y_vdata_store <= vdata_in;
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				end if;
-			when st2 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
-				CbCr_vdata_store <= vdata_in;
-				new_state <= st3;
-			when st3 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
-				if vphase /= vphase_store then
-					Y_vdata_out <= Y_vdata_store;
-					CbCr_vdata_out <= CbCr_vdata_store;
-					pclk_store <= not pclk_store;	-- Toggle pixel clock
-					Y_vdata_store <= vdata_in;
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				else
-					CbCr_vdata_store <= vdata_in;
-					new_state <= st4;
-				end if;
-			when st4 =>		-- 15kHz video. Still same CbCr.
-				new_state <= st5;
-			when st5 =>		-- Get new Y and set video output if 15kHz video, else synch fault detected and go back to st0.
-				if vphase /= vphase_store then
-					Y_vdata_out <= Y_vdata_store;
-					CbCr_vdata_out <= CbCr_vdata_store;
-					pclk_store <= not pclk_store;	-- Toggle pixel clock
-					Y_vdata_store <= vdata_in;
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				else
-					new_state <= st0;
-				end if;
-			when st6 =>		-- Get CbCr (if 15kHz video, it is still Y and will be overwritten in st3 with CrCb).
-				flags_store <= vdata_in;
-				new_state <= st7;
-			when st7 =>		-- Get new Y and set video output if 30kHz video, else is 15kHz video and get CrCb.
-				if vphase /= vphase_store then
-					Y_vdata_out <= x"10";
-					CbCr_vdata_out <= x"80";
-					flags_out <= flags_store;
-					pclk_store <= not pclk_store;	-- Toggle pixel clock
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				else
-					flags_store <= vdata_in;
-					new_state <= st8;
-				end if;
-			when st8 =>		-- 15kHz video. Still same CbCr.
-				new_state <= st9;
-			when st9 =>		-- Get new Y and set video output if 15kHz video, else synch fault detected and go back to st0.
-				if vphase /= vphase_store then
-					Y_vdata_out <= x"10";
-					CbCr_vdata_out <= x"80";
-					flags_out <= flags_store;
-					pclk_store <= not pclk_store;	-- Toggle pixel clock
-					if vdata_in /= x"00" then
-						new_state <= st2;
-					else
-						new_state <= st6;
-					end if;
-				else
-					new_state <= st0;
-				end if;
-		end case;
-	end process;
-	
-end rtl;
+
+end behav;
