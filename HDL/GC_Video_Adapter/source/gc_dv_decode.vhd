@@ -10,14 +10,15 @@ entity gc_dv_decode is
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
 		reset	: in	std_logic;
-		pclk	: out	std_logic;
+		pclk	: out	std_logic := '0';
 		Y		: out	std_logic_vector(7 downto 0);
 		CbCr	: out	std_logic_vector(7 downto 0);
 		is_Cr	: out	std_logic;
 		H_sync	: out	std_logic;
 		V_sync	: out	std_logic;
 		C_sync	: out	std_logic;
-		Blanking: out	std_logic
+		Blanking: out	std_logic;
+		dvalid	: out	std_logic := '0'
 	);
 	
 end entity;
@@ -30,7 +31,7 @@ architecture behav of gc_dv_decode is
 	
 	-- vphase state signals
 	signal vphase_store			: std_logic;
-	signal vsample_count		: natural range 0 to 5 := 0; -- check this range!!!!
+	signal vsample_count		: natural range 0 to 5 := 0;
 
 begin
 
@@ -44,6 +45,7 @@ begin
 		if (rising_edge(vclk)) then
 			if (reset = '1') then	-- Reset sample counter
 				vsample_count <= 0;
+				dvalid <= '0';
 			else
 				-- Store new vdata sample and shift samples
 				vdata_buffer(0) <= vdata_buffer(1);
@@ -51,12 +53,17 @@ begin
 				vdata_buffer(2) <= vdata_buffer(3);
 				vdata_buffer(3) <= vdata;
 				
-				vsample_count <= vsample_count + 1;
+				if (vsample_count < 5) then
+					vsample_count <= vsample_count + 1;
+				end if;
+				
 				vphase_store <= vphase;
 				
 				-- Process new video sample using vphase as trigger
 				if (vphase /= vphase_store) then
 					vsample_count <= 0;
+					
+					pclk <= not pclk;	-- Pixel clock
 					
 					-- Get Y and CbCr sample depending on the stream format
 					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
@@ -72,6 +79,7 @@ begin
 					-- If new sample exists, set output interface video values and flags
 					if (valid_sample = '1') then
 						valid_sample := '0';
+						dvalid <= '0';
 						
 						if (Y_sample = x"00") then	-- blanking data
 							Y <= x"10";
