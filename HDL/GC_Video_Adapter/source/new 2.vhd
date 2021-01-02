@@ -36,6 +36,9 @@ begin
 	-- vdata logic
 	vdata_process : process(vclk)
 		variable valid_sample	: std_logic := '0';
+		variable Y_sample		: std_logic_vector(7 downto 0);
+		variable CbCr_sample	: std_logic_vector(7 downto 0);
+
 	begin
 		if (rising_edge(vclk)) then
 			if (reset = '1') then	-- Reset sample counter
@@ -57,26 +60,28 @@ begin
 					-- Get Y and CbCr sample depending on the stream format
 					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 						valid_sample <= '1';
-						Y_vdata <= vdata_buffer(2);
-						CbCr_vdata <= vdata_buffer(3);
+						Y_sample <= vdata_buffer(2);
+						CbCr_sample <= vdata_buffer(3);
 					elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 						valid_sample <= '1';
-						Y_vdata <= vdata_buffer(0);
-						CbCr_vdata <= vdata_buffer(2);
+						Y_sample <= vdata_buffer(0);
+						CbCr_sample <= vdata_buffer(2);
 					end if;	-- if (vsample_count = 2)
 					
-					-- If new sample exists, 
+					-- If new sample exists, set output interface video values and flags
 					if (valid_sample = '1') then
 						valid_sample <= '0';
 						
-						if (Y_vdata = x"00") then	-- blanking data
+						if (Y_sample = x"00") then	-- blanking data
 							Y_vdata <= x"10";
 							CbCr_vdata <= x"80";
-							H_sync <= not CbCr_vdata(4);
-							V_sync <= not CbCr_vdata(5);
-							C_sync <= not CbCr_vdata(7);
+							H_sync <= not CbCr_sample(4);
+							V_sync <= not CbCr_sample(5);
+							C_sync <= not CbCr_sample(7);
 							Blanking <= '1';
-						else						-- video samples
+						else						-- video sample
+							Y_vdata <= Y_sample;
+							CbCr_vdata <= CbCr_sample;
 							H_sync <= '0';
 							V_sync <= '0';
 							C_sync <= '0';
