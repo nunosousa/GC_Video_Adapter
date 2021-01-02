@@ -10,7 +10,7 @@ entity gc_dv_decode is
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
 		reset	: in	std_logic;
-		pclk	: out	std_logic := '0';
+		pclk	: out	std_logic;
 		Y		: out	std_logic_vector(7 downto 0);
 		CbCr	: out	std_logic_vector(7 downto 0);
 		is_Cr	: out	std_logic;
@@ -32,6 +32,9 @@ architecture behav of gc_dv_decode is
 	-- vphase state signals
 	signal vphase_store			: std_logic;
 	signal vsample_count		: natural range 0 to 5 := 0;
+	
+	-- pixel clock
+	signal pixel_clk			: std_logic := '0';
 
 begin
 
@@ -63,9 +66,11 @@ begin
 				if (vphase /= vphase_store) then
 					vsample_count <= 0;
 					
-					pclk <= not pclk;	-- Pixel clock
+					-- Pixel clock
+					pixel_clk <= not pixel_clk;
+					pclk <= pixel_clk;
 					
-					-- Get Y and CbCr sample depending on the stream format
+					-- Get Y and CbCr sample depending on the vdata stream format
 					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 						valid_sample := '1';
 						Y_sample := vdata_buffer(2);
