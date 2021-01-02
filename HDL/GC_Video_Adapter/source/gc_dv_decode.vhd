@@ -34,7 +34,8 @@ architecture behav of gc_dv_decode is
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- pixel clock
-	signal pixel_clk			: std_logic := '0';
+	signal pixel_clk_1x			: std_logic := '0';
+	signal pixel_clk_2x			: std_logic := '0';
 
 begin
 
