@@ -23,19 +23,19 @@ end entity;
 
 architecture behav of gc_dv_decode is
 
-	-- Build incoming vdata buffer
+	-- vdata buffer
 	type vdata_buffer_type is array (0 to 3) of std_logic_vector(7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
 	
-	-- Register to hold the current vphase state
+	-- vphase state signals
 	signal vphase_store			: std_logic;
-	signal vsample_count		: natural range 0 to 4 := 0; -- check this range!!!!
-	signal valid_sample			: std_logic := 0;
+	signal vsample_count		: natural range 0 to 5 := 0; -- check this range!!!!
 
 begin
 
 	-- vdata logic
 	vdata_process : process(vclk)
+		variable valid_sample	: std_logic := '0';
 	begin
 		if (rising_edge(vclk)) then
 			if (reset = '1') then	-- Reset sample counter
@@ -54,6 +54,7 @@ begin
 				if (vphase /= vphase_store) then
 					vsample_count <= 0;
 					
+					-- Get Y and CbCr sample depending on the stream format
 					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 						valid_sample <= '1';
 						Y_vdata <= vdata_buffer(2);
@@ -62,34 +63,30 @@ begin
 						valid_sample <= '1';
 						Y_vdata <= vdata_buffer(0);
 						CbCr_vdata <= vdata_buffer(2);
-					end if;
+					end if;	-- if (vsample_count = 2)
+					
+					-- If new sample exists, 
+					if (valid_sample = 1) then
+						valid_sample <= 0;
+						
+						if (Y_vdata = x"00") then	-- blanking data
+							Y_vdata <= x"10";
+							CbCr_vdata <= x"80";
+							H_sync <= not CbCr_vdata(4);
+							V_sync <= not CbCr_vdata(5);
+							C_sync <= not CbCr_vdata(7);
+							Blanking <= '1';
+						else						-- video samples
+							H_sync <= '0';
+							V_sync <= '0';
+							C_sync <= '0';
+							Blanking <= '0';
+						end if;
+					end if;	-- if (valid_sample = 1)
+		
 				end if;	-- if (vphase /= vphase_store)
 			end if;	-- if (reset = '1')
 		end if;	-- if rising_edge(vclk)
-	end process;
-
-
-	-- Logic to process and get a color sample
-	sample_process: process(valid_sample)
-		variable tbd	: std_logic := 1;
-	begin
-		if (valid_sample = 1) then
-			valid_sample <= 0;
-			
-			if (Y_vdata = x"00") then	-- blanking data
-				Y_vdata <= x"10";
-				CbCr_vdata <= x"80";
-				H_sync <= '1';
-				V_sync <= '1';
-				C_sync <= '1';
-				Blanking <= '1';
-			else						-- video samples
-				H_sync <= '1';
-				V_sync <= '1';
-				C_sync <= '1';
-				Blanking <= '1';
-			end if;
-		end if;
 	end process;
 
 end behav;
