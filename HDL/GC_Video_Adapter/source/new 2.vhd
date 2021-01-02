@@ -66,8 +66,8 @@ begin
 					end if;	-- if (vsample_count = 2)
 					
 					-- If new sample exists, 
-					if (valid_sample = 1) then
-						valid_sample <= 0;
+					if (valid_sample = '1') then
+						valid_sample <= '0';
 						
 						if (Y_vdata = x"00") then	-- blanking data
 							Y_vdata <= x"10";
@@ -82,7 +82,7 @@ begin
 							C_sync <= '0';
 							Blanking <= '0';
 						end if;
-					end if;	-- if (valid_sample = 1)
+					end if;	-- if (valid_sample = '1')
 		
 				end if;	-- if (vphase /= vphase_store)
 			end if;	-- if (reset = '1')
