@@ -34,49 +34,38 @@ architecture behav of gc_dv_decode is
 
 begin
 
-	-- vdata buffer logic
-	vdata_buffer_process : process(vclk)
+	-- vdata logic
+	vdata_process : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
 			if (reset = '1') then	-- Reset sample counter
 				vsample_count <= 0;
-			else					-- Store new vdata sample and shift samples
+			else
+				-- Store new vdata sample and shift samples
 				vdata_buffer(0) <= vdata_buffer(1);
 				vdata_buffer(1) <= vdata_buffer(2);
 				vdata_buffer(2) <= vdata_buffer(3);
 				vdata_buffer(3) <= vdata;
 				
 				vsample_count <= vsample_count + 1;
-			end if;	-- if (reset = '0')
-		end if;	-- if rising_edge(vclk)
-	end process;
-
-
-	-- Logic to detect that a new color sample was received (by checking when vphase changes polarity)
-	vphase_process: process(vclk)
-		variable tbd	: std_logic := '1';
-	begin
-		if (rising_edge(vclk)) then
-			if (reset = '1') then
-				valid_sample <= '0';
-			else
 				vphase_store <= vphase;
-			
+				
+				-- Process new video sample using vphase as trigger
 				if (vphase /= vphase_store) then
 					vsample_count <= 0;
 					
-					if (vsample_count = 2) then		-- progresive video (vdata: <Y0><CbCr0><Y1><CbCr1>...)
+					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 						valid_sample <= '1';
 						Y_vdata <= vdata_buffer(2);
 						CbCr_vdata <= vdata_buffer(3);
-					elsif (vsample_count = 4) then	-- interlaced video (vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...)
+					elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 						valid_sample <= '1';
 						Y_vdata <= vdata_buffer(0);
 						CbCr_vdata <= vdata_buffer(2);
 					end if;
 				end if;	-- if (vphase /= vphase_store)
 			end if;	-- if (reset = '1')
-		end if;	-- if (rising_edge(vclk))
+		end if;	-- if rising_edge(vclk)
 	end process;
 
 
