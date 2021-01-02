@@ -30,7 +30,7 @@ architecture behav of gc_dv_decode is
 	-- Register to hold the current vphase state
 	signal vphase_store			: std_logic;
 	signal vsample_count		: natural range 0 to 4 := 0; -- check this range!!!!
-	signal valid_sample			: std_logic := 0;
+	signal valid_sample			: std_logic := '0';
 
 begin
 
@@ -82,10 +82,10 @@ begin
 
 	-- Logic to process and get a color sample
 	sample_process: process(valid_sample)
-		variable tbd	: std_logic := 1;
+		--variable tbd	: std_logic := '1';
 	begin
-		if (valid_sample = 1) then
-			valid_sample <= 0;
+		if (valid_sample = '1') then
+			valid_sample <= '0';
 			
 			if (Y_vdata = x"00") then	-- blanking data
 				Y_vdata <= x"10";
