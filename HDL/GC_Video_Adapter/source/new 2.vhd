@@ -59,18 +59,18 @@ begin
 					
 					-- Get Y and CbCr sample depending on the stream format
 					if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
-						valid_sample <= '1';
-						Y_sample <= vdata_buffer(2);
-						CbCr_sample <= vdata_buffer(3);
+						valid_sample := '1';
+						Y_sample := vdata_buffer(2);
+						CbCr_sample := vdata_buffer(3);
 					elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-						valid_sample <= '1';
-						Y_sample <= vdata_buffer(0);
-						CbCr_sample <= vdata_buffer(2);
+						valid_sample := '1';
+						Y_sample := vdata_buffer(0);
+						CbCr_sample := vdata_buffer(2);
 					end if;	-- if (vsample_count = 2)
 					
 					-- If new sample exists, set output interface video values and flags
 					if (valid_sample = '1') then
-						valid_sample <= '0';
+						valid_sample := '0';
 						
 						if (Y_sample = x"00") then	-- blanking data
 							Y_vdata <= x"10";
