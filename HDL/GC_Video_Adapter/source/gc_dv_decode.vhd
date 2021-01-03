@@ -49,6 +49,7 @@ begin
 
 	begin
 		if (reset = '1') then	-- Reset sample counter
+			clk_divider <= (others => '0');
 			vsample_count <= 0;
 			dvalid <= '0';
 		elsif (rising_edge(vclk)) then
@@ -64,9 +65,27 @@ begin
 			
 			vphase_store <= vphase;
 			
+			-- Pixel clock divider logic
+			clk_divider <= clk_divider + 1;
+		
+			-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
+			pixel_clk_div2 <= clk_divider(0);
+			
+			-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+			pixel_clk_div4 <= clk_divider(1);
+			
+			-- Select pixel clock
+			if (clk_sel = '0') then
+				pclk <= pixel_clk_div2;
+			else
+				pclk <= pixel_clk_div4;
+			end if;
+			
 			-- Process new video sample using vphase as trigger
 			if (vphase /= vphase_store) then
 				vsample_count <= 0;
+				
+				clk_divider <= (others => '0');	-- Synchronize pixel clock with vphase change
 				
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
@@ -74,13 +93,11 @@ begin
 					Y_sample := vdata_buffer(2);
 					CbCr_sample := vdata_buffer(3);
 					clk_sel <= '0';				-- Set pixel clock to div2 base 54 MHz clock
-					clk_divider <= (others => '0');	-- Syncronize clock
 				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 					valid_sample := '1';
 					Y_sample := vdata_buffer(0);
 					CbCr_sample := vdata_buffer(2);
 					clk_sel <= '1';				-- Set pixel clock to div4 base 54 MHz clock
-					clk_divider <= (others => '0');	-- Syncronize clock
 				end if;	-- if (vsample_count = 2)
 				
 				-- If new sample exists, set output interface video values and flags
@@ -111,29 +128,6 @@ begin
 					end if;	-- if (Y_sample = x"00")
 				end if;	-- if (valid_sample = '1')
 			end if;	-- if (vphase /= vphase_store)
-		end if;	-- if (reset = '1')
-	end process;
-	
-	-- Pixel clock logic
-	pclk_process : process(vclk)
-	begin
-		if (reset = '1') then	-- Reset sample counter
-			clk_divider <= (others => '0');
-		elsif (rising_edge(vclk)) then
-			clk_divider <= clk_divider + 1;
-		
-			-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-			pixel_clk_div2 <= clk_divider(0);
-			
-			-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-			pixel_clk_div4 <= clk_divider(1);
-			
-			-- Select pixel clock
-			if (clk_sel = '0') then
-				pclk <= pixel_clk_div2;
-			else
-				pclk <= pixel_clk_div4;
-			end if;
 		end if;	-- if (reset = '1')
 	end process;
 	
