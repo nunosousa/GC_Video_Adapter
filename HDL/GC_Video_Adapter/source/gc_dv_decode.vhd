@@ -34,7 +34,6 @@ architecture behav of gc_dv_decode is
 	
 	-- Clock divider
 	signal clk_divider			: unsigned(1 downto 0);
-	signal clk_sel				: std_logic := '0';
 	
 	-- pixel clock
 	signal pixel_clk_div2		: std_logic := '0';
@@ -46,6 +45,7 @@ begin
 		variable valid_sample	: std_logic := '0';
 		variable Y_sample		: std_logic_vector(7 downto 0);
 		variable CbCr_sample	: std_logic_vector(7 downto 0);
+		variable clk_sel		: std_logic := '0';
 
 	begin
 		if (reset = '1') then	-- Reset sample counter
@@ -64,22 +64,6 @@ begin
 			end if;
 			
 			vphase_store <= vphase;
-			
-			-- Pixel clock divider logic
-			clk_divider <= clk_divider + 1;
-		
-			-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-			pixel_clk_div2 <= clk_divider(0);
-			
-			-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-			pixel_clk_div4 <= clk_divider(1);
-			
-			-- Select pixel clock
-			if (clk_sel = '0') then
-				pclk <= pixel_clk_div2;
-			else
-				pclk <= pixel_clk_div4;
-			end if;
 			
 			-- Process new video sample using vphase as trigger
 			if (vphase /= vphase_store) then
@@ -127,7 +111,22 @@ begin
 						end if;	-- if (vphase = '1')
 					end if;	-- if (Y_sample = x"00")
 				end if;	-- if (valid_sample = '1')
+			else
+				clk_divider <= clk_divider + 1;	-- If no vphase change, simply increment pixel clock divider
 			end if;	-- if (vphase /= vphase_store)
+		
+			-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
+			pixel_clk_div2 <= clk_divider(0);
+			
+			-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+			pixel_clk_div4 <= clk_divider(1);
+			
+			-- Select pixel clock
+			if (clk_sel = '0') then
+				pclk <= pixel_clk_div2;
+			else
+				pclk <= pixel_clk_div4;
+			end if;
 		end if;	-- if (reset = '1')
 	end process;
 	
