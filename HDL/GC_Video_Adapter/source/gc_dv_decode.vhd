@@ -2,9 +2,9 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity gc_dv_decode is
-
 	port(
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
@@ -24,27 +24,28 @@ entity gc_dv_decode is
 end entity;
 
 architecture behav of gc_dv_decode is
-
 	-- vdata buffer
-	type vdata_buffer_type is array (0 to 3) of std_logic_vector(7 downto 0);
+	type vdata_buffer_type is array (0 to 3) of std_logic_vector (7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
 	
 	-- vphase state signals
 	signal vphase_store			: std_logic;
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
+	-- Clock divider
+	signal clk_divider			: unsigned (1 downto 0);
+	signal clk_sel				: std_logic := '0';
+	
 	-- pixel clock
 	signal pixel_clk_1x			: std_logic := '0';
 	signal pixel_clk_2x			: std_logic := '0';
-	signal clk_sel				: std_logic := '0';
 
 begin
-
 	-- vdata logic
 	vdata_process : process(vclk)
 		variable valid_sample	: std_logic := '0';
-		variable Y_sample		: std_logic_vector(7 downto 0);
-		variable CbCr_sample	: std_logic_vector(7 downto 0);
+		variable Y_sample		: std_logic_vector (7 downto 0);
+		variable CbCr_sample	: std_logic_vector (7 downto 0);
 
 	begin
 		if (rising_edge(vclk)) then
@@ -113,22 +114,24 @@ begin
 		end if;	-- if rising_edge(vclk)
 	end process;
 	
-	
 	-- Pixel clock logic
 	pclk_process : process(vclk)
 	begin
-		-- Clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-		if (rising_edge(vclk) or falling_edge(vclk)) then
-			pixel_clk_1x <= not pixel_clk_1x;
+		-- Clock divider
+		if(reset = '0') then
+			clk_divider <= (others => '0');
+		elsif (rising_edge(vclk)) then
+			clk_divider <= clk_divider + 1;
 		end if;
 		
-		-- Clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-		if rising_edge(vclk) then
-			pixel_clk_2x <= not pixel_clk_2x;
-		end if;
+		-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
+		pixel_clk_1x <= clk_divider(0);
+		
+		-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+		pixel_clk_2x <= clk_divider(1);
 		
 		-- Select pixel clock
-		if (rising_edge(vclk) or falling_edge(vclk)) then
+		if (rising_edge(vclk)) then
 			if (clk_sel = '0') then
 				pclk <= pixel_clk_1x;
 			else
