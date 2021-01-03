@@ -37,8 +37,8 @@ architecture behav of gc_dv_decode is
 	signal clk_sel				: std_logic := '0';
 	
 	-- pixel clock
-	signal pixel_clk_1x			: std_logic := '0';
-	signal pixel_clk_2x			: std_logic := '0';
+	signal pixel_clk_div2		: std_logic := '0';
+	signal pixel_clk_div4		: std_logic := '0';
 
 begin
 	-- vdata logic
@@ -74,12 +74,12 @@ begin
 						valid_sample := '1';
 						Y_sample := vdata_buffer(2);
 						CbCr_sample := vdata_buffer(3);
-						clk_sel <= '0';				-- Set pixel clock to 1x base 54 MHz clock
+						clk_sel <= '0';				-- Set pixel clock to div2 base 54 MHz clock
 					elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 						valid_sample := '1';
 						Y_sample := vdata_buffer(0);
 						CbCr_sample := vdata_buffer(2);
-						clk_sel <= '1';				-- Set pixel clock to 2x base 54 MHz clock
+						clk_sel <= '1';				-- Set pixel clock to div4 base 54 MHz clock
 					end if;	-- if (vsample_count = 2)
 					
 					-- If new sample exists, set output interface video values and flags
@@ -125,17 +125,17 @@ begin
 		end if;
 		
 		-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-		pixel_clk_1x <= clk_divider(0);
+		pixel_clk_div2 <= clk_divider(0);
 		
 		-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-		pixel_clk_2x <= clk_divider(1);
+		pixel_clk_div4 <= clk_divider(1);
 		
 		-- Select pixel clock
 		if (rising_edge(vclk)) then
 			if (clk_sel = '0') then
-				pclk <= pixel_clk_1x;
+				pclk <= pixel_clk_div2;
 			else
-				pclk <= pixel_clk_2x;
+				pclk <= pixel_clk_div4;
 			end if;
 		end if;
 	end process;
