@@ -25,7 +25,7 @@ end entity;
 
 architecture behav of gc_dv_decode is
 	-- vdata buffer
-	type vdata_buffer_type is array (0 to 3) of std_logic_vector (7 downto 0);
+	type vdata_buffer_type is array(0 to 3) of std_logic_vector(7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
 	
 	-- vphase state signals
@@ -33,7 +33,7 @@ architecture behav of gc_dv_decode is
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
-	signal clk_divider			: unsigned (1 downto 0);
+	signal clk_divider			: unsigned(1 downto 0);
 	signal clk_sel				: std_logic := '0';
 	
 	-- pixel clock
@@ -44,8 +44,8 @@ begin
 	-- vdata logic
 	vdata_process : process(vclk)
 		variable valid_sample	: std_logic := '0';
-		variable Y_sample		: std_logic_vector (7 downto 0);
-		variable CbCr_sample	: std_logic_vector (7 downto 0);
+		variable Y_sample		: std_logic_vector(7 downto 0);
+		variable CbCr_sample	: std_logic_vector(7 downto 0);
 
 	begin
 		if (rising_edge(vclk)) then
@@ -75,11 +75,13 @@ begin
 						Y_sample := vdata_buffer(2);
 						CbCr_sample := vdata_buffer(3);
 						clk_sel <= '0';				-- Set pixel clock to div2 base 54 MHz clock
+						clk_divider <= (others => '0');	-- Syncronize clock
 					elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 						valid_sample := '1';
 						Y_sample := vdata_buffer(0);
 						CbCr_sample := vdata_buffer(2);
 						clk_sel <= '1';				-- Set pixel clock to div4 base 54 MHz clock
+						clk_divider <= (others => '0');	-- Syncronize clock
 					end if;	-- if (vsample_count = 2)
 					
 					-- If new sample exists, set output interface video values and flags
