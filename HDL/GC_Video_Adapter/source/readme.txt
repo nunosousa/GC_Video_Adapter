@@ -12,3 +12,4 @@ https://www.allaboutcircuits.com/technical-articles/introduction-to-clock-domain
 https://www.allaboutcircuits.com/technical-articles/introduction-to-distributed-arithmetic/
 https://www.allaboutcircuits.com/technical-articles/basic-binary-division-the-algorithm-and-the-vhdl-code/
 https://insights.sigasi.com/opinion/jan/vhdls-crown-jewel/
+https://vhdlwhiz.com/delta-cycles-explained/
