@@ -18,7 +18,7 @@ entity gc_dv_decode is
 		V_sync	: out	std_logic;
 		C_sync	: out	std_logic;
 		Blanking: out	std_logic;
-		dvalid	: out	std_logic := '0'
+		dvalid	: out	std_logic
 	);
 	
 end entity;
