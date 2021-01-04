@@ -13,3 +13,4 @@ https://www.allaboutcircuits.com/technical-articles/introduction-to-distributed-
 https://www.allaboutcircuits.com/technical-articles/basic-binary-division-the-algorithm-and-the-vhdl-code/
 https://insights.sigasi.com/opinion/jan/vhdls-crown-jewel/
 https://vhdlwhiz.com/delta-cycles-explained/
+https://vhdlguide.readthedocs.io/en/latest/vhdl/testbench.html

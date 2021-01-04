@@ -42,9 +42,25 @@ architecture behav of gc_dv_decode_tb is
 	signal Blanking_tb	: out	std_logic;
 	signal dvalid_tb	: out	std_logic;
 	
+	-- declare record type
+	type test_vector is record
+		a, b : std_logic;
+		sum, carry : std_logic;
+	end record; 
+
+	type test_vector_array is array (natural range <>) of test_vector;
+	constant test_vectors : test_vector_array := (
+		-- a, b, sum , carry   -- positional method is used below
+		('0', '0', '0', '0'), -- or (a => '0', b => '0', sum => '0', carry => '0')
+		('0', '1', '1', '0'),
+		('1', '0', '1', '0'),
+		('1', '1', '0', '1'),
+		('0', '1', '0', '1')  -- fail test
+		);
+	
 begin
 	
-	u1: gc_dv_decode port map (
+	uut: gc_dv_decode port map (
 		vclk		=> vclk_tb,
 		vphase		=> vphase_tb,
 		vdata		=> vdata_tb,
@@ -59,5 +75,29 @@ begin
 		Blanking	=> Blanking_tb,
 		dvalid		=> dvalid_tb );
 	
+	tb1 : process
+		constant period: time := 20 ns;
+	begin
+		for i in test_vectors'range loop
+			a <= test_vectors(i).a;  -- signal a = i^th-row-value of test_vector's a
+			b <= test_vectors(i).b;
+
+			wait for period;
+
+			assert ( 
+				(sum = test_vectors(i).sum) and 
+				(carry = test_vectors(i).carry) 
+				)
+
+			-- image is used for string-representation of integer etc.
+			report "test_vector " & integer'image(i) & " failed " & 
+				" for input a = " & std_logic'image(a) & 
+				" and b = " & std_logic'image(b)
+				severity error;
+		end loop;
+		
+		wait;
+		
+	end process; 
 	
 end behav;
