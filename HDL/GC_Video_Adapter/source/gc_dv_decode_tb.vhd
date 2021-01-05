@@ -42,22 +42,43 @@ architecture behav of gc_dv_decode_tb is
 	signal Blanking_tb	: out	std_logic;
 	signal dvalid_tb	: out	std_logic;
 	
-	-- declare record type
+	-- Declare record type to build a test vector for this test bench
 	type test_vector is record
-		a, b : std_logic;
-		sum, carry : std_logic;
-	end record; 
+			vclk_tb		: std_logic;
+			vphase_tb	: std_logic;
+			vdata_tb	: std_logic_vector(7 downto 0);
+			reset_tb	: std_logic;
+			pclk_tb		: std_logic;
+			Y_tb		: std_logic_vector(7 downto 0);
+			CbCr_tb		: std_logic_vector(7 downto 0);
+			is_Cr_tb	: std_logic;
+			H_sync_tb	: std_logic;
+			V_sync_tb	: std_logic;
+			C_sync_tb	: std_logic;
+			Blanking_tb	: std_logic;
+			dvalid_tb	: std_logic;
+	end record;
 
 	type test_vector_array is array (natural range <>) of test_vector;
 	constant test_vectors : test_vector_array := (
-		-- a, b, sum , carry   -- positional method is used below
-		('0', '0', '0', '0'), -- or (a => '0', b => '0', sum => '0', carry => '0')
-		('0', '1', '1', '0'),
-		('1', '0', '1', '0'),
-		('1', '1', '0', '1'),
-		('0', '1', '0', '1')  -- fail test
+		-- vclk, vphase, vdata, reset, pclk, Y,     CbCr,  is_Cr, H_sync, V_sync, C_sync, Blanking, dvalid
+		  ('0',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),	-- fast data, blanking data, raw flags low
+		  ('1',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
+		  ('0',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
+		  ('1',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
+		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 4 high
+		  ('1',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '1',    x"10", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('1',  '1',    x"10", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '0',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 5 high
+		  ('1',  '0',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '0',    x"20", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('1',  '0',    x"20", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 7 high
+		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '1',    x"80", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
+		  ('0',  '1',    x"80", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1')
 		);
-	
 begin
 	
 	uut: gc_dv_decode port map (
@@ -79,8 +100,10 @@ begin
 		constant period: time := 20 ns;
 	begin
 		for i in test_vectors'range loop
-			a <= test_vectors(i).a;  -- signal a = i^th-row-value of test_vector's a
-			b <= test_vectors(i).b;
+			-- Feed in test data from ith test vector line
+			vclk_tb <= test_vectors(i).vclk_tb;
+			vphase_tb <= test_vectors(i).vphase_tb;
+			vdata_tb <= test_vectors(i).vdata_tb;
 
 			wait for period;
 

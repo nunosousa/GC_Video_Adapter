@@ -87,7 +87,7 @@ begin
 				-- If new sample exists, set output interface video values and flags
 				if (valid_sample = '1') then
 					valid_sample := '0';
-					dvalid <= '0';
+					dvalid <= '1';
 					
 					if (Y_sample = x"00") then	-- blanking data
 						Y <= x"10";
@@ -110,6 +110,8 @@ begin
 							is_Cr <= '0';
 						end if;	-- if (vphase = '1')
 					end if;	-- if (Y_sample = x"00")
+				else
+					dvalid <= '0';
 				end if;	-- if (valid_sample = '1')
 			else
 				clk_divider <= clk_divider + 1;	-- If no vphase change, simply increment pixel clock divider
