@@ -117,22 +117,16 @@ begin
 
 			wait for period;
 
-			assert ( 
-				(pclk_tb = test_vectors(i).pclk_tb) and
-				(Y_tb = test_vectors(i).Y_tb) and
-				(CbCr_tb = test_vectors(i).CbCr_tb) and
-				(is_Cr_tb = test_vectors(i).is_Cr_tb) and
-				(H_sync_tb = test_vectors(i).H_sync_tb) and
-				(V_sync_tb = test_vectors(i).V_sync_tb) and
-				(C_sync_tb = test_vectors(i).C_sync_tb) and
-				(Blanking_tb = test_vectors(i).Blanking_tb) and
-				(dvalid_tb = test_vectors(i).dvalid_tb)
-				)
+			assert (pclk_tb = test_vectors(i).pclk_tb) report "Test_vector " & integer'image(i) & " failed " & " for input a = " & std_logic'image(a) & severity error;
+			assert (Y_tb = test_vectors(i).Y_tb)
+			assert (CbCr_tb = test_vectors(i).CbCr_tb)
+			assert (is_Cr_tb = test_vectors(i).is_Cr_tb)
+			assert (H_sync_tb = test_vectors(i).H_sync_tb)
+			assert (V_sync_tb = test_vectors(i).V_sync_tb)
+			assert (C_sync_tb = test_vectors(i).C_sync_tb)
+			assert (Blanking_tb = test_vectors(i).Blanking_tb)
+			assert (dvalid_tb = test_vectors(i).dvalid_tb)
 
-			report "test_vector " & integer'image(i) & " failed " & 
-				" for input a = " & std_logic'image(a) & 
-				" and b = " & std_logic'image(b)
-				severity error;
 		end loop;
 		
 		wait;
