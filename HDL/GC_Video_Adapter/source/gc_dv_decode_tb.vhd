@@ -66,18 +66,26 @@ architecture behav of gc_dv_decode_tb is
 		  ('1',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
 		  ('0',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
 		  ('1',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
-		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 4 high
-		  ('1',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '1',    x"10", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('1',  '1',    x"10", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '0',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 5 high
-		  ('1',  '0',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '0',    x"20", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('1',  '0',    x"20", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),	-- fast data, blanking data, raw flag bit 7 high
-		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '1',    x"80", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1'),
-		  ('0',  '1',    x"80", '0',   '0',  x"10", x"80", '0',   '0',    '0',    '0',    '0',      '1')
+		  
+		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '1',    '1',    '1',    '1',      '1'),	-- fast data, blanking data, raw flag bit 4 high
+		  ('1',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '1',    '1',    '1',    '1',      '1'),
+		  ('0',  '1',    x"10", '0',   '1',  x"10", x"80", '0',   '1',    '1',    '1',    '1',      '1'),
+		  ('1',  '1',    x"10", '0',   '1',  x"10", x"80", '0',   '1',    '1',    '1',    '1',      '1'),
+		  
+		  ('0',  '0',    x"00", '0',   '0',  x"10", x"80", '1',   '0',    '1',    '1',    '1',      '1'),	-- fast data, blanking data, raw flag bit 5 high
+		  ('1',  '0',    x"00", '0',   '0',  x"10", x"80", '1',   '0',    '1',    '1',    '1',      '1'),
+		  ('0',  '0',    x"20", '0',   '1',  x"10", x"80", '1',   '0',    '1',    '1',    '1',      '1'),
+		  ('1',  '0',    x"20", '0',   '1',  x"10", x"80", '1',   '0',    '1',    '1',    '1',      '1'),
+		  
+		  ('0',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '1',    '0',    '1',    '1',      '1'),	-- fast data, blanking data, raw flag bit 7 high
+		  ('1',  '1',    x"00", '0',   '0',  x"10", x"80", '0',   '1',    '0',    '1',    '1',      '1'),
+		  ('0',  '1',    x"80", '0',   '1',  x"10", x"80", '0',   '1',    '0',    '1',    '1',      '1'),
+		  ('1',  '1',    x"80", '0',   '1',  x"10", x"80", '0',   '1',    '0',    '1',    '1',      '1'),
+		  
+		  ('0',  '0',    x"00", '0',   '0',  x"10", x"80", '1',   '1',    '1',    '0',    '1',      '1'),
+		  ('1',  '0',    x"00", '0',   '0',  x"10", x"80", '1',   '1',    '1',    '0',    '1',      '1'),
+		  ('0',  '0',    x"00", '0',   '1',  x"10", x"80", '1',   '1',    '1',    '0',    '1',      '1'),
+		  ('1',  '0',    x"00", '0',   '1',  x"10", x"80", '1',   '1',    '1',    '0',    '1',      '1')
 		);
 begin
 	
@@ -94,7 +102,8 @@ begin
 		V_sync		=> V_sync_tb,
 		C_sync		=> C_sync_tb,
 		Blanking	=> Blanking_tb,
-		dvalid		=> dvalid_tb );
+		dvalid		=> dvalid_tb
+	);
 	
 	tb1 : process
 		constant period: time := 20 ns;
@@ -104,15 +113,22 @@ begin
 			vclk_tb <= test_vectors(i).vclk_tb;
 			vphase_tb <= test_vectors(i).vphase_tb;
 			vdata_tb <= test_vectors(i).vdata_tb;
+			reset_tb <= test_vectors(i).reset_tb;
 
 			wait for period;
 
 			assert ( 
-				(sum = test_vectors(i).sum) and 
-				(carry = test_vectors(i).carry) 
+				(pclk_tb = test_vectors(i).pclk_tb) and
+				(Y_tb = test_vectors(i).Y_tb) and
+				(CbCr_tb = test_vectors(i).CbCr_tb) and
+				(is_Cr_tb = test_vectors(i).is_Cr_tb) and
+				(H_sync_tb = test_vectors(i).H_sync_tb) and
+				(V_sync_tb = test_vectors(i).V_sync_tb) and
+				(C_sync_tb = test_vectors(i).C_sync_tb) and
+				(Blanking_tb = test_vectors(i).Blanking_tb) and
+				(dvalid_tb = test_vectors(i).dvalid_tb)
 				)
 
-			-- image is used for string-representation of integer etc.
 			report "test_vector " & integer'image(i) & " failed " & 
 				" for input a = " & std_logic'image(a) & 
 				" and b = " & std_logic'image(b)
