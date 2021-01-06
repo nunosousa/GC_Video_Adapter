@@ -91,7 +91,7 @@ architecture behav of gc_dv_decode_tb is
 		);
 begin
 	
-	uut: gc_dv_decode port map (
+	uut: component gc_dv_decode port map (
 		vclk		=> vclk_tb,
 		vphase		=> vphase_tb,
 		vdata		=> vdata_tb,
