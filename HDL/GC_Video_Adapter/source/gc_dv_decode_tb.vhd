@@ -28,19 +28,19 @@ architecture behav of gc_dv_decode_tb is
 	end component;
 	
 	-- Test bench signals
-	signal vclk_tb		: in	std_logic;
-	signal vphase_tb	: in	std_logic;
-	signal vdata_tb		: in	std_logic_vector(7 downto 0);
-	signal reset_tb		: in	std_logic;
-	signal pclk_tb		: out	std_logic;
-	signal Y_tb			: out	std_logic_vector(7 downto 0);
-	signal CbCr_tb		: out	std_logic_vector(7 downto 0);
-	signal is_Cr_tb		: out	std_logic;
-	signal H_sync_tb	: out	std_logic;
-	signal V_sync_tb	: out	std_logic;
-	signal C_sync_tb	: out	std_logic;
-	signal Blanking_tb	: out	std_logic;
-	signal dvalid_tb	: out	std_logic;
+	signal vclk_tb		: std_logic;
+	signal vphase_tb	: std_logic;
+	signal vdata_tb		: std_logic_vector(7 downto 0);
+	signal reset_tb		: std_logic;
+	signal pclk_tb		: std_logic;
+	signal Y_tb			: std_logic_vector(7 downto 0);
+	signal CbCr_tb		: std_logic_vector(7 downto 0);
+	signal is_Cr_tb		: std_logic;
+	signal H_sync_tb	: std_logic;
+	signal V_sync_tb	: std_logic;
+	signal C_sync_tb	: std_logic;
+	signal Blanking_tb	: std_logic;
+	signal dvalid_tb	: std_logic;
 	
 	-- Declare record type to build a test vector for this test bench
 	type test_vector is record
