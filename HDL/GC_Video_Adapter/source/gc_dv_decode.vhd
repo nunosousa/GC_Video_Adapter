@@ -10,15 +10,15 @@ entity gc_dv_decode is
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
 		reset	: in	std_logic;
-		pclk	: out	std_logic;
-		Y		: out	std_logic_vector(7 downto 0);
-		CbCr	: out	std_logic_vector(7 downto 0);
-		is_Cr	: out	std_logic;
-		H_sync	: out	std_logic;
-		V_sync	: out	std_logic;
-		C_sync	: out	std_logic;
-		Blanking: out	std_logic;
-		dvalid	: out	std_logic
+		pclk	: out	std_logic := '0';
+		Y		: out	std_logic_vector(7 downto 0) := (others => '0');
+		CbCr	: out	std_logic_vector(7 downto 0) := (others => '0');
+		is_Cr	: out	std_logic := '0';
+		H_sync	: out	std_logic := '0';
+		V_sync	: out	std_logic := '0';
+		C_sync	: out	std_logic := '0';
+		Blanking: out	std_logic := '0';
+		dvalid	: out	std_logic := '0'
 	);
 	
 end entity;
@@ -33,7 +33,7 @@ architecture behav of gc_dv_decode is
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
-	signal clk_divider			: unsigned(1 downto 0);
+	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
 	
 	-- pixel clock
 	signal pixel_clk_div2		: std_logic := '0';
