@@ -62,7 +62,7 @@ architecture behav of gc_dv_decode_tb is
 	type test_vector_array is array (natural range <>) of test_vector;
 	constant test_vectors : test_vector_array := (
 		-- vclk, vphase, vdata, reset, pclk, Y,     CbCr,  is_Cr, H_sync, V_sync, C_sync, Blanking, dvalid
-		  ('0',  '0',    x"00", '1',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),	-- reset
+		  ('1',  '0',    x"00", '1',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),	-- reset
 		  
 		  ('0',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),	-- fast data, blanking data, raw flags low
 		  ('1',  '0',    x"00", '0',   '0',  x"00", x"00", '0',   '0',    '0',    '0',    '0',      '0'),
