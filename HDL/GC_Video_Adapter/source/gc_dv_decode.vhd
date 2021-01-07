@@ -10,15 +10,15 @@ entity gc_dv_decode is
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
 		reset	: in	std_logic;
-		pclk	: out	std_logic := '0';
-		Y		: out	std_logic_vector(7 downto 0) := (others => '0');
-		CbCr	: out	std_logic_vector(7 downto 0) := (others => '0');
-		is_Cr	: out	std_logic := '0';
-		H_sync	: out	std_logic := '0';
-		V_sync	: out	std_logic := '0';
-		C_sync	: out	std_logic := '0';
-		Blanking: out	std_logic := '0';
-		dvalid	: out	std_logic := '0'
+		pclk	: out	std_logic;
+		Y		: out	std_logic_vector(7 downto 0);
+		CbCr	: out	std_logic_vector(7 downto 0);
+		is_Cr	: out	std_logic;
+		H_sync	: out	std_logic;
+		V_sync	: out	std_logic;
+		C_sync	: out	std_logic;
+		Blanking: out	std_logic;
+		dvalid	: out	std_logic
 	);
 	
 end entity;
@@ -52,6 +52,12 @@ begin
 			clk_divider <= (others => '0');
 			vsample_count <= 0;
 			dvalid <= '0';
+			Y <= x"10";
+			CbCr <= x"80";
+			H_sync <= '0';
+			V_sync <= '0';
+			C_sync <= '0';
+			Blanking <= '0';
 		elsif (rising_edge(vclk)) then
 			-- Store new vdata sample and shift samples
 			vdata_buffer(0) <= vdata_buffer(1);
@@ -112,6 +118,12 @@ begin
 					end if;	-- if (Y_sample = x"00")
 				else
 					dvalid <= '0';
+					Y <= x"10";
+					CbCr <= x"80";
+					H_sync <= '0';
+					V_sync <= '0';
+					C_sync <= '0';
+					Blanking <= '0';
 				end if;	-- if (valid_sample = '1')
 			else
 				clk_divider <= clk_divider + 1;	-- If no vphase change, simply increment pixel clock divider
