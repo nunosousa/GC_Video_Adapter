@@ -73,17 +73,17 @@ begin
 			
 			-- Process new video sample using vphase as trigger
 			if (vphase /= vphase_store) then
-				vsample_count <= 0;
+				vsample_count <= 1;
 				
 				clk_divider <= (others => '0');	-- Synchronize pixel clock with vphase change
 				
 				-- Get Y and CbCr sample depending on the vdata stream format
-				if (vsample_count = 1) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
+				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 					valid_sample := '1';
 					Y_sample := vdata_buffer(2);
 					CbCr_sample := vdata_buffer(3);
 					clk_sel := '0';				-- Set pixel clock to div2 base 54 MHz clock
-				elsif (vsample_count = 3) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 					valid_sample := '1';
 					Y_sample := vdata_buffer(0);
 					CbCr_sample := vdata_buffer(2);
