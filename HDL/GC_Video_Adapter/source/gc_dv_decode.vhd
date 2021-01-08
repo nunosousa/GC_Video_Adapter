@@ -34,10 +34,6 @@ architecture behav of gc_dv_decode is
 	
 	-- Clock divider
 	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
-	
-	-- pixel clock
-	--signal pixel_clk_div2		: std_logic := '0';
-	--signal pixel_clk_div4		: std_logic := '0';
 
 begin
 	-- vdata logic
@@ -54,6 +50,7 @@ begin
 			dvalid <= '0';
 			Y <= x"10";
 			CbCr <= x"80";
+			is_Cr <= '0';
 			H_sync <= '0';
 			V_sync <= '0';
 			C_sync <= '0';
@@ -67,6 +64,15 @@ begin
 			
 			if (vsample_count < 5) then
 				vsample_count <= vsample_count + 1;
+			else
+				dvalid <= '0';
+				Y <= x"10";
+				CbCr <= x"80";
+				is_Cr <= '0';
+				H_sync <= '0';
+				V_sync <= '0';
+				C_sync <= '0';
+				Blanking <= '0';
 			end if;
 			
 			vphase_store <= vphase;
@@ -120,6 +126,7 @@ begin
 					dvalid <= '0';
 					Y <= x"10";
 					CbCr <= x"80";
+					is_Cr <= '0';
 					H_sync <= '0';
 					V_sync <= '0';
 					C_sync <= '0';
