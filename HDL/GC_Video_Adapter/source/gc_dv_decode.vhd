@@ -36,8 +36,8 @@ architecture behav of gc_dv_decode is
 	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
 	
 	-- pixel clock
-	signal pixel_clk_div2		: std_logic := '0';
-	signal pixel_clk_div4		: std_logic := '0';
+	--signal pixel_clk_div2		: std_logic := '0';
+	--signal pixel_clk_div4		: std_logic := '0';
 
 begin
 	-- vdata logic
@@ -128,18 +128,14 @@ begin
 			else
 				clk_divider <= clk_divider + 1;	-- If no vphase change, simply increment pixel clock divider
 			end if;	-- if (vphase /= vphase_store)
-		
-			-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-			pixel_clk_div2 <= clk_divider(0);
-			
-			-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-			pixel_clk_div4 <= clk_divider(1);
 			
 			-- Select pixel clock
 			if (clk_sel = '0') then
-				pclk <= pixel_clk_div2;
+				-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
+				pclk <= clk_divider(0);
 			else
-				pclk <= pixel_clk_div4;
+				-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+				pclk <= clk_divider(1);
 			end if;
 		end if;	-- if (reset = '1')
 	end process;
