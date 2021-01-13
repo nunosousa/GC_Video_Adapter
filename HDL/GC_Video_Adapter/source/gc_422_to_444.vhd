@@ -32,6 +32,10 @@ entity gc_422_to_444 is
 end entity;
 
 architecture behav of gc_422_to_444 is
+	signal Y_pipe	: is array(0 to 2*fcoefs'range - 1) of unsigned(7 downto 0);
+	signal Cb_pipe	: is array(0 to fcoefs'range - 1) of unsigned(7 downto 0);
+	signal Cr_pipe	: is array(0 to fcoefs'range - 1) of unsigned(7 downto 0);
+	
 begin
 	process : process(pclk)
 	begin
@@ -39,6 +43,13 @@ begin
 			-- Reset something
 		elsif (rising_edge(pclk)) then
 			if (dvalid_in = '1') then
+				Y_pipe(0) <= Y_in;
+				
+				if (is_Cr_in = '1') then
+					Cr_pipe <= CbCr_in;
+				else
+					Cb_pipe <= CbCr_in;
+				end if;
 			
 			end if;
 		end if;	-- if (reset = '1')
