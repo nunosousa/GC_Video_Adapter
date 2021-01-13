@@ -13,6 +13,7 @@ entity gc_422_to_444 is
 		Y_in		: in	std_logic_vector(7 downto 0);
 		CbCr_in		: in	std_logic_vector(7 downto 0);
 		is_Cr_in	: in	std_logic;
+		is_odd_in	: in	std_logic;
 		H_sync_in	: in	std_logic;
 		V_sync_in	: in	std_logic;
 		C_sync_in	: in	std_logic;
