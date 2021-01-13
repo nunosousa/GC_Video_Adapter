@@ -14,6 +14,7 @@ entity gc_dv_decode is
 		Y		: out	std_logic_vector(7 downto 0);
 		CbCr	: out	std_logic_vector(7 downto 0);
 		is_Cr	: out	std_logic;
+		is_odd	: out	std_logic;
 		H_sync	: out	std_logic;
 		V_sync	: out	std_logic;
 		C_sync	: out	std_logic;
@@ -33,7 +34,7 @@ architecture behav of gc_dv_decode is
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
-	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
+	signal clk_divider			: unsigned(1 downto 0) := (others => '1');
 
 begin
 	-- vdata logic
@@ -45,12 +46,13 @@ begin
 
 	begin
 		if (reset = '1') then	-- Reset sample counter
-			clk_divider <= (others => '0');
+			clk_divider <= (others => '1');
 			vsample_count <= 0;
 			dvalid <= '0';
 			Y <= x"10";
 			CbCr <= x"80";
 			is_Cr <= '0';
+			is_odd <= '0';
 			H_sync <= '0';
 			V_sync <= '0';
 			C_sync <= '0';
@@ -69,6 +71,7 @@ begin
 				Y <= x"10";
 				CbCr <= x"80";
 				is_Cr <= '0';
+				is_odd <= '0';
 				H_sync <= '0';
 				V_sync <= '0';
 				C_sync <= '0';
@@ -81,7 +84,7 @@ begin
 			if (vphase /= vphase_store) then
 				vsample_count <= 1;
 				
-				clk_divider <= (others => '0');	-- Synchronize pixel clock with vphase change
+				clk_divider <= (others => '1');	-- Synchronize pixel clock with vphase change
 				
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
@@ -106,14 +109,12 @@ begin
 						CbCr <= x"80";
 						H_sync <= not CbCr_sample(4);
 						V_sync <= not CbCr_sample(5);
+						is_odd <= not CbCr_sample(6);
 						C_sync <= not CbCr_sample(7);
 						Blanking <= '1';
 					else						-- video sample
 						Y <= Y_sample;
 						CbCr <= CbCr_sample;
-						H_sync <= '0';
-						V_sync <= '0';
-						C_sync <= '0';
 						Blanking <= '0';
 						
 						if (vphase = '1') then
@@ -127,6 +128,7 @@ begin
 					Y <= x"10";
 					CbCr <= x"80";
 					is_Cr <= '0';
+					is_odd <= '0';
 					H_sync <= '0';
 					V_sync <= '0';
 					C_sync <= '0';
