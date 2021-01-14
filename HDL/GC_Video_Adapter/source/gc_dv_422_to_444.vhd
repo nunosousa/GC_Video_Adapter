@@ -1,10 +1,10 @@
--- file: gc_422_to_444.vhd
+-- file: gc_dv_422_to_444.vhd
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity gc_422_to_444 is
+entity gc_dv_422_to_444 is
    generic(
 		fcoefs		: integer_vector := (1, 1)
    );
@@ -31,7 +31,7 @@ entity gc_422_to_444 is
 	
 end entity;
 
-architecture behav of gc_422_to_444 is
+architecture behav of gc_dv_422_to_444 is
 	signal Y_pipe	: is array(0 to 2*fcoefs'range - 1) of unsigned(7 downto 0);
 	signal Cb_pipe	: is array(0 to fcoefs'range - 1) of unsigned(7 downto 0);
 	signal Cr_pipe	: is array(0 to fcoefs'range - 1) of unsigned(7 downto 0);
