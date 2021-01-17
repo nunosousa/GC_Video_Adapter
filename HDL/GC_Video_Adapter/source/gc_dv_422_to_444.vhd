@@ -36,14 +36,16 @@ architecture behav of gc_dv_422_to_444 is
 	constant CbCr_plen	: integer := 2*fcoefs'range;
 	
 	-- Pipes for video samples
-	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0);
-	signal Cb_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
-	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
+	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
+	signal Cb_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
+	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
 	
 	-- Chroma samples ordering flags
 	signal sample_ready	: std_logic := '0';
 	variable Cb_loaded	: std_logic := '0';
-	variable Cr_loaded	: std_logic := '0';begin
+	variable Cr_loaded	: std_logic := '0';
+
+begin
 	feed_sample_pipes : process(pclk)
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
@@ -105,8 +107,16 @@ architecture behav of gc_dv_422_to_444 is
 				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			end if; -- if (is_odd = '1')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
-	end process;
+	end process; -- feed_sample_pipes : process(pclk)
 	
 	
+	fir_filter : process(pclk)
+	begin
+		if (reset = '1') then
+			
+		elsif (rising_edge(pclk)) then
+			
+		end if;
+	end process; -- 
 	
 end behav;
