@@ -42,14 +42,15 @@ architecture behav of gc_dv_422_to_444 is
 	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
 	
 	-- Chroma samples ordering checks
-	signal chroma_ready	: std_logic := 0;
-	signal chroma_count	: std_logic := 0;
+	signal sample_ready	: std_logic := 0;
+	variable Cb_loaded	: std_logic := 0;
+	variable Cr_loaded	: std_logic := 0;
 
 begin
 	process : process(pclk)
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
-			-- Reset something
+			-- Reset pipes.
 			Y_pipe <= (others => 0);
 			Cb_pipe <= (others => 0);
 			Cr_pipe <= (others => 0);
@@ -61,7 +62,7 @@ begin
 			end loop;
 			Y_pipe(0) <= Y;
 			
-			-- Delay and separate Cb and Cr sample values
+			-- Delay and separate Cb and Cr sample values.
 			delay_CbCr : for i in 1 to (CbCr_plen - 1) loop
 				if (is_Cr = '1') then
 					Cr_pipe(i) <= Cr_pipe(i - 1);
@@ -72,17 +73,34 @@ begin
 			
 			if (is_Cr = '1') then
 				Cr_pipe(0) <= CbCr;
+				Cr_loaded <= '1';
 			else
 				Cb_pipe(0) <= CbCr;
+				Cb_loaded <= '1';
 			end if;
 			
+			-- When both Cr and Cb samples are stored, flag them as ready.
+			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
+				sample_ready <= '1';
+			else
+				sample_ready <= '0';
+			end if;
 			
-			
-			-- If chroma sample out of order, clean pipes
+			-- Detect wrong chroma sample order.
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
-				chroma_ready = '0';
+				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
+					-- Wrong sequence - reset pipes.
+					Y_pipe <= (others => 0);
+					Cb_pipe <= (others => 0);
+					Cr_pipe <= (others => 0);
+				end if;
 			else					-- If frame is even, then first chroma sample is Cb
-				chroma_ready = '0';
+				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
+					-- Wrong sequence - reset pipes.
+					Y_pipe <= (others => 0);
+					Cb_pipe <= (others => 0);
+					Cr_pipe <= (others => 0);
+				end if;
 			end if;
 		end if;	-- if (reset = '1')
 	end process;
