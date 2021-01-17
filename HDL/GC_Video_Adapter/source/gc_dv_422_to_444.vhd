@@ -45,32 +45,30 @@ begin
 		if (reset = '1') then
 			-- Reset something
 		elsif (rising_edge(pclk)) then
-			if (dvalid_in = '1') then
 			
-				-- Delay sample values
-				delay_Y : for i in 1 to Y_plen loop
-					Y_pipe(i) <= Y_pipe(i - 1);
-				end loop;
-				Y_pipe(0) <= Y;
-				
-				delay_CbCr : for i in 1 to CbCr_plen loop
-					if (is_Cr = '1') then
-						Cr_pipe(i) <= Cr_pipe(i - 1);
-					else
-						Cb_pipe(i) <= Cb_pipe(i - 1);
-					end if;
-				end loop;
-				
+			-- Delay sample values
+			delay_Y : for i in 1 to (Y_plen - 1) loop
+				Y_pipe(i) <= Y_pipe(i - 1);
+			end loop;
+			Y_pipe(0) <= Y;
+			
+			delay_CbCr : for i in 1 to (CbCr_plen - 1) loop
 				if (is_Cr = '1') then
-					Cr_pipe(0) <= CbCr;
+					Cr_pipe(i) <= Cr_pipe(i - 1);
 				else
-					Cb_pipe(0) <= CbCr;
+					Cb_pipe(i) <= Cb_pipe(i - 1);
 				end if;
+			end loop;
 			
-			
-			
-			
+			if (is_Cr = '1') then
+				Cr_pipe(0) <= CbCr;
+			else
+				Cb_pipe(0) <= CbCr;
 			end if;
+			
+			
+			
+
 		end if;	-- if (reset = '1')
 	end process;
 end behav;
