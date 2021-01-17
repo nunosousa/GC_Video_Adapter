@@ -5,9 +5,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity gc_dv_422_to_444 is
-   generic(
-		fcoefs		: integer_vector := (1, 1) -- correct this to unsigned vector with n bits wide
-   );
 	port(
 		pclk		: in	std_logic;
 		Y			: in	std_logic_vector(7 downto 0);
@@ -32,7 +29,9 @@ entity gc_dv_422_to_444 is
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
-	-- Constants
+	-- FIR filter constants
+	type fcoefs_type is array (natural range <>) of signed(7 downto 0);
+	constant fcoefs		: fcoefs_type := (1, 1); -- Enter here the filter coefficients
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
 	
@@ -44,9 +43,7 @@ architecture behav of gc_dv_422_to_444 is
 	-- Chroma samples ordering flags
 	signal sample_ready	: std_logic := '0';
 	variable Cb_loaded	: std_logic := '0';
-	variable Cr_loaded	: std_logic := '0';
-
-begin
+	variable Cr_loaded	: std_logic := '0';begin
 	feed_sample_pipes : process(pclk)
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
