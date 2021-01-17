@@ -32,7 +32,7 @@ entity gc_dv_422_to_444 is
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
-	-- 
+	-- Constants
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
 	
@@ -41,19 +41,22 @@ architecture behav of gc_dv_422_to_444 is
 	signal Cb_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
 	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
 	
-	-- Chroma samples ordering checks
-	signal sample_ready	: std_logic := 0;
-	variable Cb_loaded	: std_logic := 0;
-	variable Cr_loaded	: std_logic := 0;
+	-- Chroma samples ordering flags
+	signal sample_ready	: std_logic := '0';
+	variable Cb_loaded	: std_logic := '0';
+	variable Cr_loaded	: std_logic := '0';
 
 begin
-	process : process(pclk)
+	feed_sample_pipes : process(pclk)
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes.
-			Y_pipe <= (others => 0);
-			Cb_pipe <= (others => 0);
-			Cr_pipe <= (others => 0);
+			Y_pipe <= (others => x"10");
+			Cb_pipe <= (others => x"80");
+			Cr_pipe <= (others => x"80");
+			sample_ready <= '0';
+			Cb_loaded := '0';
+			Cr_loaded := '0';
 			
 		elsif (rising_edge(pclk)) then
 			-- Delay Y sample values
@@ -73,35 +76,40 @@ begin
 			
 			if (is_Cr = '1') then
 				Cr_pipe(0) <= CbCr;
-				Cr_loaded <= '1';
+				Cr_loaded := '1';
 			else
 				Cb_pipe(0) <= CbCr;
-				Cb_loaded <= '1';
-			end if;
+				Cb_loaded := '1';
+			end if; -- if (is_Cr = '1')
 			
 			-- When both Cr and Cb samples are stored, flag them as ready.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
 				sample_ready <= '1';
+				Cb_loaded := '0';
+				Cr_loaded := '0';
 			else
 				sample_ready <= '0';
-			end if;
+			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
 				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
 					-- Wrong sequence - reset pipes.
-					Y_pipe <= (others => 0);
-					Cb_pipe <= (others => 0);
-					Cr_pipe <= (others => 0);
-				end if;
+					Y_pipe <= (others => x"10");
+					Cb_pipe <= (others => x"80");
+					Cr_pipe <= (others => x"80");
+				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
 					-- Wrong sequence - reset pipes.
-					Y_pipe <= (others => 0);
-					Cb_pipe <= (others => 0);
-					Cr_pipe <= (others => 0);
-				end if;
-			end if;
-		end if;	-- if (reset = '1')
+					Y_pipe <= (others => x"10");
+					Cb_pipe <= (others => x"80");
+					Cr_pipe <= (others => x"80");
+				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
+			end if; -- if (is_odd = '1')
+		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process;
+	
+	
+	
 end behav;
