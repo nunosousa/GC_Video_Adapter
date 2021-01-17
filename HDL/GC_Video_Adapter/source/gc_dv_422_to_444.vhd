@@ -32,26 +32,36 @@ entity gc_dv_422_to_444 is
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
+	-- 
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
 	
+	-- Pipes for video samples
 	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0);
 	signal Cb_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
 	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0);
+	
+	-- Chroma samples ordering checks
+	signal chroma_ready	: std_logic := 0;
+	signal chroma_count	: std_logic := 0;
 
 begin
 	process : process(pclk)
 	begin
-		if (reset = '1') then
+		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset something
-		elsif (rising_edge(pclk)) then
+			Y_pipe <= (others => 0);
+			Cb_pipe <= (others => 0);
+			Cr_pipe <= (others => 0);
 			
-			-- Delay sample values
+		elsif (rising_edge(pclk)) then
+			-- Delay Y sample values
 			delay_Y : for i in 1 to (Y_plen - 1) loop
 				Y_pipe(i) <= Y_pipe(i - 1);
 			end loop;
 			Y_pipe(0) <= Y;
 			
+			-- Delay and separate Cb and Cr sample values
 			delay_CbCr : for i in 1 to (CbCr_plen - 1) loop
 				if (is_Cr = '1') then
 					Cr_pipe(i) <= Cr_pipe(i - 1);
@@ -68,7 +78,12 @@ begin
 			
 			
 			
-
+			-- If chroma sample out of order, clean pipes
+			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
+				chroma_ready = '0';
+			else					-- If frame is even, then first chroma sample is Cb
+				chroma_ready = '0';
+			end if;
 		end if;	-- if (reset = '1')
 	end process;
 end behav;
