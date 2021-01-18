@@ -115,6 +115,12 @@ begin
 			end loop;
 			
 			--
+			for i in 0 to (fcoef_taps - 1) loop
+				Cb_filter_products(i) <= Cb_pipe(i) * fcoefs(fcoef_taps - i - 1);
+				Cb_filter_products(CbCr_plen - i - 1) <= Cb_pipe(i) * fcoefs(i);
+			end loop;
+			
+			--
 			if (filter_sum > x"FF") then
 				filter_sum = x"FF";
 			elsif  (filter_sum < 0) then
@@ -123,11 +129,4 @@ begin
 			
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- feed_sample_pipes : process(pclk)
-	
-	--
-	product_calc: for i in 0 to (fcoef_taps - 1) generate
-		Cb_filter_products(i) <= Cb_pipe(i) * fcoefs(fcoef_taps - i - 1);
-		Cb_filter_products(CbCr_plen - i - 1) <= Cb_pipe(i) * fcoefs(i);
-	end generate;
-	
 end behav;
