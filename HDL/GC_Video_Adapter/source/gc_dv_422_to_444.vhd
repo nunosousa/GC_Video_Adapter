@@ -32,8 +32,10 @@ architecture behav of gc_dv_422_to_444 is
 	-- FIR filter constants
 	type fcoefs_type is array (natural range <>) of signed(7 downto 0);
 	constant fcoefs		: fcoefs_type := (1, 1); -- Enter here the filter coefficients
+	constant fcoef_taps	: integer := fcoefs'range;
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
+	constant latency	: integer;
 	
 	-- Pipes for video samples
 	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
@@ -59,25 +61,14 @@ begin
 			
 		elsif (rising_edge(pclk)) then
 			-- Delay Y sample values
-			delay_Y : for i in 1 to (Y_plen - 1) loop
-				Y_pipe(i) <= Y_pipe(i - 1);
-			end loop;
-			Y_pipe(0) <= Y;
+			Y_pipe <= Y & Y_pipe(0 to Y_plen - 2);
 			
 			-- Delay and separate Cb and Cr sample values.
-			delay_CbCr : for i in 1 to (CbCr_plen - 1) loop
-				if (is_Cr = '1') then
-					Cr_pipe(i) <= Cr_pipe(i - 1);
-				else
-					Cb_pipe(i) <= Cb_pipe(i - 1);
-				end if;
-			end loop;
-			
 			if (is_Cr = '1') then
-				Cr_pipe(0) <= CbCr;
+				Cr_pipe <= CbCr & Cr_pipe(0 to CbCr_plen - 2);
 				Cr_loaded := '1';
 			else
-				Cb_pipe(0) <= CbCr;
+				Cb_pipe <= CbCr & Cb_pipe(0 to CbCr_plen - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
@@ -108,15 +99,35 @@ begin
 			end if; -- if (is_odd = '1')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- feed_sample_pipes : process(pclk)
-	
-	
-	fir_filter : process(pclk)
+
+	-- 
+	feed_sample_pipes : process(pclk)
+		variable filter_sum	: signed();
 	begin
-		if (reset = '1') then
+		if ((reset = '1') or (dvalid = '0')) then
+			-- 
 			
 		elsif (rising_edge(pclk)) then
+			-- 
+			filter_sum := (others => '0');
+			for i in 0 to (fcoef_taps - 1) loop
+				filter_sum := filter_sum + filter_products(i);
+			end loop;
 			
-		end if;
-	end process; -- 
+			--
+			if (filter_sum > x"FF") then
+				filter_sum = x"FF";
+			elsif  (filter_sum < 0) then
+				filter_sum = 0;
+			end if;
+			
+		end if;	-- if ((reset = '1') or (dvalid = '0'))
+	end process; -- feed_sample_pipes : process(pclk)
+	
+	--
+	product_calc: for i in 0 to (fcoef_taps - 1) generate
+		Cb_filter_products(i) <= Cb_pipe(i) * fcoefs(fcoef_taps - i - 1);
+		Cb_filter_products(CbCr_plen - i - 1) <= Cb_pipe(i) * fcoefs(i);
+	end generate;
 	
 end behav;
