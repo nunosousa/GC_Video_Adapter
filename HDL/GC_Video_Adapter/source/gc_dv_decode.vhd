@@ -59,10 +59,11 @@ begin
 			Blanking <= '0';
 		elsif (rising_edge(vclk)) then
 			-- Store new vdata sample and shift samples
-			vdata_buffer(0) <= vdata_buffer(1);
-			vdata_buffer(1) <= vdata_buffer(2);
-			vdata_buffer(2) <= vdata_buffer(3);
-			vdata_buffer(3) <= vdata;
+			--vdata_buffer(0) <= vdata_buffer(1);
+			--vdata_buffer(1) <= vdata_buffer(2);
+			--vdata_buffer(2) <= vdata_buffer(3);
+			--vdata_buffer(3) <= vdata;
+			vdata_buffer <= vdata & vdata_buffer(0 to 2);
 			
 			if (vsample_count < 5) then
 				vsample_count <= vsample_count + 1;
