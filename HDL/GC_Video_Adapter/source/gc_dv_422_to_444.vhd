@@ -31,7 +31,7 @@ end entity;
 architecture behav of gc_dv_422_to_444 is
 	-- FIR filter constants
 	type fcoefs_type is array (natural range <>) of signed(7 downto 0);
-	constant fcoefs		: fcoefs_type := (1, 1); -- Enter here the filter coefficients
+	constant fcoefs		: fcoefs_type := (1, 1); -- Enter here the filter coefficients (index [0] to index [n])
 	constant fcoef_taps	: integer := fcoefs'range;
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
@@ -109,13 +109,10 @@ begin
 			-- 
 			
 		elsif (rising_edge(pclk)) then
-			-- Perform the coeficient multiplications
+			-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 			for i in 0 to (fcoef_taps - 1) loop
-				Cb_filter_products(i) <= Cb_pipe(i) * fcoefs(fcoef_taps - i - 1);
-				Cb_filter_products(CbCr_plen - i - 1) <= Cb_pipe(i) * fcoefs(i);
-				
-				Cr_filter_products(i) <= Cr_pipe(i) * fcoefs(fcoef_taps - i - 1);
-				Cr_filter_products(CbCr_plen - i - 1) <= Cr_pipe(i) * fcoefs(i);
+				Cb_filter_products(i) <= (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+				Cr_filter_products(i) <= (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
 			end loop;
 			
 			-- Sum all multiplication results
@@ -127,7 +124,7 @@ begin
 			end loop;
 
 			-- Perform normalizing division (using bit shifting)
-			Cb_flt
+			Cb_flt <= Cb_filter_sum();
 			Cr_flt
 			
 			-- Truncate result
