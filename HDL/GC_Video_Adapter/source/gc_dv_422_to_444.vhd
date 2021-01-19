@@ -101,32 +101,47 @@ begin
 	end process; -- feed_sample_pipes : process(pclk)
 
 	-- 
-	feed_sample_pipes : process(pclk)
-		variable filter_sum	: signed();
+	fir_filter : process(pclk)
+		variable Cb_filter_sum	: signed();
+		variable Cr_filter_sum	: signed();
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
 			
 		elsif (rising_edge(pclk)) then
-			-- 
-			filter_sum := (others => '0');
-			for i in 0 to (fcoef_taps - 1) loop
-				filter_sum := filter_sum + filter_products(i);
-			end loop;
-			
-			--
+			-- Perform the coeficient multiplications
 			for i in 0 to (fcoef_taps - 1) loop
 				Cb_filter_products(i) <= Cb_pipe(i) * fcoefs(fcoef_taps - i - 1);
 				Cb_filter_products(CbCr_plen - i - 1) <= Cb_pipe(i) * fcoefs(i);
+				
+				Cr_filter_products(i) <= Cr_pipe(i) * fcoefs(fcoef_taps - i - 1);
+				Cr_filter_products(CbCr_plen - i - 1) <= Cr_pipe(i) * fcoefs(i);
 			end loop;
 			
-			--
-			if (filter_sum > x"FF") then
-				filter_sum = x"FF";
-			elsif  (filter_sum < 0) then
-				filter_sum = 0;
+			-- Sum all multiplication results
+			Cb_filter_sum := (others => 0);
+			Cr_filter_sum := (others => 0);
+			for i in 0 to (fcoef_taps - 1) loop
+				Cb_filter_sum := Cb_filter_sum + Cb_filter_products(i);
+				Cr_filter_sum := Cr_filter_sum + Cr_filter_products(i);
+			end loop;
+
+			-- Perform normalizing division (using bit shifting)
+			Cb_flt
+			Cr_flt
+			
+			-- Truncate result
+			if (Cb_flt > x"FF") then
+				Cb_flt = x"FF";
+			elsif  (Cb_flt < 0) then
+				Cb_flt = 0;
 			end if;
 			
+			if (Cr_flt > x"FF") then
+				Cr_flt = x"FF";
+			elsif  (Cr_flt < 0) then
+				Cr_flt = 0;
+			end if;
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
-	end process; -- feed_sample_pipes : process(pclk)
+	end process; -- fir_filter : process(pclk)
 end behav;
