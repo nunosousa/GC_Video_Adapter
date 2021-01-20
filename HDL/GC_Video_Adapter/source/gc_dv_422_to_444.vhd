@@ -63,14 +63,14 @@ begin
 			
 		elsif (rising_edge(pclk)) then
 			-- Delay Y sample values
-			Y_pipe <= Y & Y_pipe(0 to Y_plen - 2);
+			Y_pipe <= unsigned(Y) & Y_pipe(0 to Y_plen - 2);
 			
 			-- Delay and separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_pipe <= CbCr & Cr_pipe(0 to CbCr_plen - 2);
+				Cr_pipe <= unsigned(CbCr) & Cr_pipe(0 to CbCr_plen - 2);
 				Cr_loaded := '1';
 			else
-				Cb_pipe <= CbCr & Cb_pipe(0 to CbCr_plen - 2);
+				Cb_pipe <= unsigned(CbCr) & Cb_pipe(0 to CbCr_plen - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
@@ -79,8 +79,8 @@ begin
 				sample_ready <= '1';
 				Cb_loaded := '0';
 				Cr_loaded := '0';
-			else
-				sample_ready <= '0';
+			--else
+			--	sample_ready <= '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
