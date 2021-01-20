@@ -31,7 +31,7 @@ end entity;
 architecture behav of gc_dv_422_to_444 is
 	-- FIR filter constants
 	type fcoefs_type is array (natural range <>) of signed(7 downto 0);
-	constant fcoefs		: fcoefs_type := (1, 1); -- Enter here the filter coefficients (index [0] to index [n])
+	constant fcoefs		: fcoefs_type := (-4, 6, -12, 20, -32, 48, -70, 104, -152, 236, -420, 1300); -- (index [n] to index [0])
 	constant fcoef_taps	: integer := fcoefs'range;
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
