@@ -29,13 +29,15 @@ entity gc_dv_422_to_444 is
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
-	-- FIR filter constants
-	type fcoefs_type is array (natural range <>) of signed(11 downto 0);
+	-- FIR filter configuration
+	constant fcoef_width	: integer := 12; -- Bit width of the filter coefficients including sign bit.
+	constant data_width	: integer := 8;
+	type fcoefs_type is array (natural range <>) of signed((fcoef_width - 1) downto 0);
 	constant fcoefs		: fcoefs_type := (-4, 6, -12, 20, -32, 48, -70, 104, -152, 236, -420, 1300); -- (index [n] to index [0])
 	constant fcoef_taps	: integer := fcoefs'range;
 	constant Y_plen		: integer := 4*fcoefs'range;
 	constant CbCr_plen	: integer := 2*fcoefs'range;
-	constant latency	: integer;
+	constant latency	: integer := 0;
 	
 	-- Pipes for video samples
 	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
@@ -104,8 +106,8 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		signal Cb_filter_products	: signed(21 downto 0);
-		signal Cr_filter_products	: signed(21 downto 0);
+		signal Cb_filter_products	: signed((fcoef_width + data_width) downto 0);
+		signal Cr_filter_products	: signed((fcoef_width + data_width) downto 0);
 		signal Cb_filter_sum		: signed(24 downto 0);
 		signal Cr_filter_sum		: signed(24 downto 0);
 	begin
