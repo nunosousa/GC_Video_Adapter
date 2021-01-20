@@ -31,13 +31,14 @@ end entity;
 architecture behav of gc_dv_422_to_444 is
 	-- FIR filter configuration
 	constant fcoef_width	: integer := 12; -- Bit width of the filter coefficients including sign bit.
-	constant data_width	: integer := 8;
+	constant data_width		: integer := 8;
 	type fcoefs_type is array (natural range <>) of signed((fcoef_width - 1) downto 0);
-	constant fcoefs		: fcoefs_type := (-4, 6, -12, 20, -32, 48, -70, 104, -152, 236, -420, 1300); -- (index [n] to index [0])
-	constant fcoef_taps	: integer := fcoefs'range;
-	constant Y_plen		: integer := 4*fcoefs'range;
-	constant CbCr_plen	: integer := 2*fcoefs'range;
-	constant latency	: integer := 0;
+	constant fcoefs			: fcoefs_type := (-4, 6, -12, 20, -32, 48, -70, 104, -152, 236, -420, 1300); -- (index [n] to index [0])
+	constant fnorm_shift	: integer := 11; -- Bit shifts required to perform division by 2048.
+	constant fcoef_taps		: integer := fcoefs'range;
+	constant Y_plen			: integer := 4*fcoefs'range;
+	constant CbCr_plen		: integer := 2*fcoefs'range;
+	constant latency		: integer := 0;
 	
 	-- Pipes for video samples
 	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
@@ -110,6 +111,8 @@ begin
 		signal Cr_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
 		signal Cb_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
 		signal Cr_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
+		variable Cb_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
+		variable Cr_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
@@ -130,20 +133,24 @@ begin
 			end loop;
 
 			-- Perform normalizing division (using bit shifting)
-			Cb_flt <= Cb_filter_sum();
-			Cr_flt
+			Cb_norm_result <= shift_right(Cb_filter_sum, fnorm_shift);
+			Cr_norm_result <= shift_right(Cr_filter_sum, fnorm_shift);
 			
 			-- Truncate result
-			if (Cb_flt > x"FF") then
-				Cb_flt = x"FF";
-			elsif  (Cb_flt < 0) then
+			if (Cb_norm_result > 255) then
+				Cb_flt = 255;
+			elsif  (Cb_norm_result < 0) then
 				Cb_flt = 0;
+			else
+				Cb_flt <= unsigned(resize(Cb_norm_result, 8));
 			end if;
 			
-			if (Cr_flt > x"FF") then
-				Cr_flt = x"FF";
-			elsif  (Cr_flt < 0) then
+			if (Cr_norm_result > 255) then
+				Cr_flt = 255;
+			elsif  (Cr_norm_result < 0) then
 				Cr_flt = 0;
+			else
+				Cr_flt <= unsigned(resize(Cr_norm_result, 8));
 			end if;
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- fir_filter : process(pclk)
