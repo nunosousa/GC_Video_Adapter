@@ -104,8 +104,10 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		variable Cb_filter_sum	: signed();
-		variable Cr_filter_sum	: signed();
+		signal Cb_filter_products	: signed(21 downto 0);
+		signal Cr_filter_products	: signed(21 downto 0);
+		signal Cb_filter_sum		: signed(24 downto 0);
+		signal Cr_filter_sum		: signed(24 downto 0);
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
