@@ -106,10 +106,10 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		signal Cb_filter_products	: signed((fcoef_width + data_width) downto 0);
-		signal Cr_filter_products	: signed((fcoef_width + data_width) downto 0);
-		signal Cb_filter_sum		: signed(24 downto 0);
-		signal Cr_filter_sum		: signed(24 downto 0);
+		signal Cb_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
+		signal Cr_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
+		signal Cb_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
+		signal Cr_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
