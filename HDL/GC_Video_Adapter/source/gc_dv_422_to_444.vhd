@@ -85,6 +85,7 @@ begin
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
 				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
 					-- Wrong sequence - reset pipes.
+					Cb_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
 					Cr_pipe <= (others => x"80");
@@ -92,6 +93,7 @@ begin
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
 					-- Wrong sequence - reset pipes.
+					Cr_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
 					Cr_pipe <= (others => x"80");
