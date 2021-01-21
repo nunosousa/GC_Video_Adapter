@@ -138,17 +138,17 @@ begin
 			
 			-- Truncate result
 			if (Cb_norm_result > 255) then
-				Cb_flt = 255;
+				Cb_flt <= 255;
 			elsif  (Cb_norm_result < 0) then
-				Cb_flt = 0;
+				Cb_flt <= 0;
 			else
 				Cb_flt <= unsigned(resize(Cb_norm_result, 8));
 			end if;
 			
 			if (Cr_norm_result > 255) then
-				Cr_flt = 255;
+				Cr_flt <= 255;
 			elsif  (Cr_norm_result < 0) then
-				Cr_flt = 0;
+				Cr_flt <= 0;
 			else
 				Cr_flt <= unsigned(resize(Cr_norm_result, 8));
 			end if;
