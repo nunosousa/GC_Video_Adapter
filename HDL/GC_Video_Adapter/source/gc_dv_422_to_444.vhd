@@ -41,14 +41,18 @@ architecture behav of gc_dv_422_to_444 is
 	constant latency		: integer := 0;
 	
 	-- Pipes for video samples
-	signal Y_pipe		: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
-	signal Cb_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
-	signal Cr_pipe		: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
+	signal Y_pipe			: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
+	signal Cb_pipe			: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
+	signal Cr_pipe			: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
 	
 	-- Chroma samples ordering flags
-	signal sample_ready	: std_logic := '0';
-	variable Cb_loaded	: std_logic := '0';
-	variable Cr_loaded	: std_logic := '0';
+	signal sample_ready		: std_logic := '0';
+	variable Cb_loaded		: std_logic := '0';
+	variable Cr_loaded		: std_logic := '0';
+	
+	-- Processed chroma samples
+	signal Cb_processed		: unsigned(7 downto 0);
+	signal Cr_processed		: unsigned(7 downto 0);
 
 begin
 	feed_sample_pipes : process(pclk)
@@ -107,10 +111,10 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		signal Cb_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
-		signal Cr_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
-		signal Cb_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
-		signal Cr_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
+		variable Cb_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
+		variable Cr_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
+		variable Cb_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
+		variable Cr_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
 		variable Cb_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
 		variable Cr_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
 	begin
@@ -118,40 +122,59 @@ begin
 			-- 
 			
 		elsif (rising_edge(pclk)) then
-			-- Perform the filter coefficient multiplication and partial sum of symmetric terms
-			for i in 0 to (fcoef_taps - 1) loop
-				Cb_filter_products(i) <= (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
-				Cr_filter_products(i) <= (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
-			end loop;
-			
-			-- Sum all multiplication results
-			Cb_filter_sum := (others => 0);
-			Cr_filter_sum := (others => 0);
-			for i in 0 to (fcoef_taps - 1) loop
-				Cb_filter_sum := Cb_filter_sum + Cb_filter_products(i);
-				Cr_filter_sum := Cr_filter_sum + Cr_filter_products(i);
-			end loop;
-
-			-- Perform normalizing division (using bit shifting)
-			Cb_norm_result <= shift_right(Cb_filter_sum, fnorm_shift);
-			Cr_norm_result <= shift_right(Cr_filter_sum, fnorm_shift);
-			
-			-- Truncate result
-			if (Cb_norm_result > 255) then
-				Cb_flt <= 255;
-			elsif  (Cb_norm_result < 0) then
-				Cb_flt <= 0;
-			else
-				Cb_flt <= unsigned(resize(Cb_norm_result, 8));
-			end if;
-			
-			if (Cr_norm_result > 255) then
-				Cr_flt <= 255;
-			elsif  (Cr_norm_result < 0) then
-				Cr_flt <= 0;
-			else
-				Cr_flt <= unsigned(resize(Cr_norm_result, 8));
-			end if;
+			if (sample_ready = '1') then
+				sample_ready <= '0';
+				
+				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
+				for i in 0 to (fcoef_taps - 1) loop
+					Cb_filter_products(i) <= (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cr_filter_products(i) <= (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+				end loop;
+				
+				-- Sum all multiplication results
+				Cb_filter_sum := (others => 0);
+				Cr_filter_sum := (others => 0);
+				for i in 0 to (fcoef_taps - 1) loop
+					Cb_filter_sum := Cb_filter_sum + Cb_filter_products(i);
+					Cr_filter_sum := Cr_filter_sum + Cr_filter_products(i);
+				end loop;
+				
+				-- Perform normalizing division (using bit shifting)
+				Cb_norm_result <= shift_right(Cb_filter_sum, fnorm_shift);
+				Cr_norm_result <= shift_right(Cr_filter_sum, fnorm_shift);
+				
+				-- Truncate result
+				if (Cb_norm_result > 255) then
+					Cb_processed <= 255;
+				elsif  (Cb_norm_result < 0) then
+					Cb_processed <= 0;
+				else
+					Cb_processed <= unsigned(resize(Cb_norm_result, 8));
+				end if;
+				
+				if (Cr_norm_result > 255) then
+					Cr_processed <= 255;
+				elsif  (Cr_norm_result < 0) then
+					Cr_processed <= 0;
+				else
+					Cr_processed <= unsigned(resize(Cr_norm_result, 8));
+				end if;
+			end if; -- if (sample_ready = '0')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- fir_filter : process(pclk)
+
+	-- 
+	generate_output_samples : process(pclk)
+	begin
+		Y_dly <= Y_pipe();
+		if (tbd) then
+			Cb_flt <= Cb_processed;
+			Cr_flt <= Cr_processed;
+		else
+			Cb_flt <= Cb_pipe();
+			Cr_flt <= Cr_pipe();
+		end if;
+		
+	end process; -- generate_output_samples : process(pclk)
+
 end behav;
