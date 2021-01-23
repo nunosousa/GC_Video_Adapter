@@ -123,16 +123,17 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		constant product_width		: natural := fcoef_width + data_width + 1;
+		constant product_width		: natural := fcoef_width + data_width + 1; -- Product size of filter coefficient with sample
 		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
 		variable Cb_filter_products	: product_array_type;
 		variable Cr_filter_products	: product_array_type;
-		constant sum_width			: natural := fcoef_width + data_width + 1 + fcoef_taps - 1;
+		constant sum_width			: natural := product_width + fcoef_taps - 1; -- Total sum size of sum of products
 		variable Cb_filter_sum		: signed((sum_width - 1) downto 0);
 		variable Cr_filter_sum		: signed((sum_width - 1) downto 0);
-		constant norm_width			: natural := fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift;
+		constant norm_width			: natural := norm_width - fnorm_shift; -- Size of normalized sample (after division shift)
 		variable Cb_norm_result		: signed((norm_width - 1) downto 0);
 		variable Cr_norm_result		: signed((norm_width - 1) downto 0);
+		
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
