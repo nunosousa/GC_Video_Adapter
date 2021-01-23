@@ -97,8 +97,6 @@ begin
 				sample_ready <= '1';
 				Cb_loaded := '0';
 				Cr_loaded := '0';
-			--else
-			--	sample_ready <= '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
