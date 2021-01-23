@@ -30,11 +30,10 @@ end entity;
 
 architecture behav of gc_dv_422_to_444 is
 	-- FIR filter configuration
-	constant fcoef_width	: integer := 12; -- Bit width of the filter coefficients including sign bit.
-	constant data_width		: integer := 8;
+	constant fcoef_width	: natural := 12; -- Bit width of the filter coefficients including sign bit.
+	constant data_width		: natural := 8;
 	type fcoefs_type is array (natural range <>) of signed((fcoef_width - 1) downto 0);
-	constant fcoefs			: fcoefs_type := (
-												to_signed(-4, fcoef_width),
+	constant fcoefs			: fcoefs_type := (	to_signed(-4, fcoef_width),		-- FIR coefficient at index +n/-n sample
 												to_signed(6, fcoef_width),
 												to_signed(-12, fcoef_width),
 												to_signed(20, fcoef_width),
@@ -45,12 +44,12 @@ architecture behav of gc_dv_422_to_444 is
 												to_signed(-152, fcoef_width),
 												to_signed(236, fcoef_width),
 												to_signed(-420, fcoef_width),
-												to_signed(1300, fcoef_width)); -- (index [n] to index [0])
-	constant fcoef_taps		: integer := 12;
-	constant fnorm_shift	: integer := 11; -- Bit shifts required to perform division by 2048.
-	constant Y_plen			: integer := 4*fcoef_taps;
-	constant CbCr_plen		: integer := 2*fcoef_taps;
-	constant latency		: integer := 0;
+												to_signed(1300, fcoef_width));	-- FIR coefficient at index +1/-1 sample
+	constant fcoef_taps		: natural := 12;
+	constant fnorm_shift	: natural := 11; -- Bit shifts required to perform division by 2048.
+	constant Y_plen			: natural := 4*fcoef_taps;
+	constant CbCr_plen		: natural := 2*fcoef_taps;
+	constant latency		: natural := 0;
 	
 	-- Pipes for video samples
 	type sample_array_type is array (natural range <>) of unsigned((data_width - 1) downto 0);
@@ -124,12 +123,16 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		variable Cb_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
-		variable Cr_filter_products	: signed(((fcoef_width + data_width + 1) - 1) downto 0);
-		variable Cb_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
-		variable Cr_filter_sum		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1) - 1) downto 0);
-		variable Cb_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
-		variable Cr_norm_result		: signed(((fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift) - 1) downto 0);
+		constant product_width		: natural := fcoef_width + data_width + 1;
+		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
+		variable Cb_filter_products	: product_array_type;
+		variable Cr_filter_products	: product_array_type;
+		constant sum_width			: natural := fcoef_width + data_width + 1 + fcoef_taps - 1;
+		variable Cb_filter_sum		: signed((sum_width - 1) downto 0);
+		variable Cr_filter_sum		: signed((sum_width - 1) downto 0);
+		constant norm_width			: natural := fcoef_width + data_width + 1 + fcoef_taps - 1 - fnorm_shift;
+		variable Cb_norm_result		: signed((norm_width - 1) downto 0);
+		variable Cr_norm_result		: signed((norm_width - 1) downto 0);
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- 
