@@ -33,7 +33,19 @@ architecture behav of gc_dv_422_to_444 is
 	constant fcoef_width	: integer := 12; -- Bit width of the filter coefficients including sign bit.
 	constant data_width		: integer := 8;
 	type fcoefs_type is array (natural range <>) of signed((fcoef_width - 1) downto 0);
-	constant fcoefs			: fcoefs_type := (-4, 6, -12, 20, -32, 48, -70, 104, -152, 236, -420, 1300); -- (index [n] to index [0])
+	constant fcoefs			: fcoefs_type := (
+												to_signed(-4, fcoef_width),
+												to_signed(6, fcoef_width),
+												to_signed(-12, fcoef_width),
+												to_signed(20, fcoef_width),
+												to_signed(-32, fcoef_width),
+												to_signed(48, fcoef_width),
+												to_signed(-70, fcoef_width),
+												to_signed(104, fcoef_width),
+												to_signed(-152, fcoef_width),
+												to_signed(236, fcoef_width),
+												to_signed(-420, fcoef_width),
+												to_signed(1300, fcoef_width)); -- (index [n] to index [0])
 	constant fnorm_shift	: integer := 11; -- Bit shifts required to perform division by 2048.
 	constant fcoef_taps		: integer := fcoefs'range;
 	constant Y_plen			: integer := 4*fcoefs'range;
@@ -92,6 +104,7 @@ begin
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
 				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
 					-- Wrong sequence - reset pipes.
+					sample_ready <= '0';
 					Cb_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
@@ -100,6 +113,7 @@ begin
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
 					-- Wrong sequence - reset pipes.
+					sample_ready <= '0';
 					Cr_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
@@ -166,15 +180,16 @@ begin
 	-- 
 	generate_output_samples : process(pclk)
 	begin
-		Y_dly <= Y_pipe();
-		if (tbd) then
-			Cb_flt <= Cb_processed;
-			Cr_flt <= Cr_processed;
-		else
-			Cb_flt <= Cb_pipe();
-			Cr_flt <= Cr_pipe();
+		if (rising_edge(pclk)) then
+			Y_dly <= Y_pipe();
+			if (tbd) then
+				Cb_flt <= Cb_processed;
+				Cr_flt <= Cr_processed;
+			else
+				Cb_flt <= Cb_pipe();
+				Cr_flt <= Cr_pipe();
+			end if;
 		end if;
-		
 	end process; -- generate_output_samples : process(pclk)
 
 end behav;
