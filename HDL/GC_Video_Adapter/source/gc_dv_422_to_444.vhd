@@ -46,21 +46,20 @@ architecture behav of gc_dv_422_to_444 is
 												to_signed(236, fcoef_width),
 												to_signed(-420, fcoef_width),
 												to_signed(1300, fcoef_width)); -- (index [n] to index [0])
+	constant fcoef_taps		: integer := 12;
 	constant fnorm_shift	: integer := 11; -- Bit shifts required to perform division by 2048.
-	constant fcoef_taps		: integer := fcoefs'range;
-	constant Y_plen			: integer := 4*fcoefs'range;
-	constant CbCr_plen		: integer := 2*fcoefs'range;
+	constant Y_plen			: integer := 4*fcoef_taps;
+	constant CbCr_plen		: integer := 2*fcoef_taps;
 	constant latency		: integer := 0;
 	
 	-- Pipes for video samples
-	signal Y_pipe			: is array(0 to Y_plen - 1) of unsigned(7 downto 0) := (others => x"10");
-	signal Cb_pipe			: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
-	signal Cr_pipe			: is array(0 to CbCr_plen - 1) of unsigned(7 downto 0) := (others => x"80");
+	type sample_array_type is array (natural range <>) of unsigned((data_width - 1) downto 0);
+	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
+	signal Cb_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cr_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
 	
 	-- Chroma samples ordering flags
 	signal sample_ready		: std_logic := '0';
-	variable Cb_loaded		: std_logic := '0';
-	variable Cr_loaded		: std_logic := '0';
 	
 	-- Processed chroma samples
 	signal Cb_processed		: unsigned(7 downto 0);
@@ -68,6 +67,8 @@ architecture behav of gc_dv_422_to_444 is
 
 begin
 	feed_sample_pipes : process(pclk)
+		variable Cb_loaded		: std_logic := '0';
+		variable Cr_loaded		: std_logic := '0';
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes.
@@ -141,8 +142,8 @@ begin
 				
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_filter_products(i) <= (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
-					Cr_filter_products(i) <= (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cb_filter_products(i) := (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cr_filter_products(i) := (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
 				end loop;
 				
 				-- Sum all multiplication results
