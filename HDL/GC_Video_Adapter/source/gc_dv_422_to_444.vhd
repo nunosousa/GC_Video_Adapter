@@ -47,15 +47,17 @@ architecture behav of gc_dv_422_to_444 is
 												to_signed(1300, fcoef_width));	-- FIR coefficient at index +1/-1 sample
 	constant fcoef_taps		: natural := 12;
 	constant fnorm_shift	: natural := 11; -- Bit shifts required to perform division by 2048.
-	constant Y_plen			: natural := 4*fcoef_taps;
-	constant CbCr_plen		: natural := 2*fcoef_taps;
-	constant latency		: natural := 0;
+	constant latency		: natural := 2;
+	constant CbCr_fplen		: natural := 2*fcoef_taps;
+	constant Y_plen			: natural := 2*CbCr_fplen + latency;
 	
 	-- Pipes for video samples
 	type sample_array_type is array (natural range <>) of unsigned((data_width - 1) downto 0);
 	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
-	signal Cb_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
-	signal Cr_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cb_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
+	signal Cr_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
+	signal Cb_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
+	signal Cr_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
 	
 	-- Chroma samples ordering flags
 	signal sample_ready		: std_logic := '0';
@@ -72,8 +74,8 @@ begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes.
 			Y_pipe <= (others => x"10");
-			Cb_pipe <= (others => x"80");
-			Cr_pipe <= (others => x"80");
+			Cb_fpipe <= (others => x"80");
+			Cr_fpipe <= (others => x"80");
 			sample_ready <= '0';
 			Cb_loaded := '0';
 			Cr_loaded := '0';
@@ -84,10 +86,12 @@ begin
 			
 			-- Delay and separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_pipe <= unsigned(CbCr) & Cr_pipe(0 to CbCr_plen - 2);
+				Cr_fpipe <= unsigned(CbCr) & Cr_fpipe(0 to CbCr_plen - 2);
+				Cr_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cr_outpipe(0 to latency - 2);
 				Cr_loaded := '1';
 			else
-				Cb_pipe <= unsigned(CbCr) & Cb_pipe(0 to CbCr_plen - 2);
+				Cb_fpipe <= unsigned(CbCr) & Cb_fpipe(0 to CbCr_plen - 2);
+				Cb_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cb_outpipe(0 to latency - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
@@ -96,6 +100,8 @@ begin
 				sample_ready <= '1';
 				Cb_loaded := '0';
 				Cr_loaded := '0';
+			else
+				sample_ready <= '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
@@ -105,8 +111,8 @@ begin
 					sample_ready <= '0';
 					Cb_loaded := '0';
 					Y_pipe <= (others => x"10");
-					Cb_pipe <= (others => x"80");
-					Cr_pipe <= (others => x"80");
+					Cb_fpipe <= (others => x"80");
+					Cr_fpipe <= (others => x"80");
 				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
@@ -114,8 +120,8 @@ begin
 					sample_ready <= '0';
 					Cr_loaded := '0';
 					Y_pipe <= (others => x"10");
-					Cb_pipe <= (others => x"80");
-					Cr_pipe <= (others => x"80");
+					Cb_fpipe <= (others => x"80");
+					Cr_fpipe <= (others => x"80");
 				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			end if; -- if (is_odd = '1')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
@@ -140,12 +146,10 @@ begin
 			
 		elsif (rising_edge(pclk)) then
 			if (sample_ready = '1') then
-				sample_ready <= '0';
-				
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_filter_products(i) := (Cb_pipe(i) + Cb_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
-					Cr_filter_products(i) := (Cr_pipe(i) + Cr_pipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cb_filter_products(i) := (Cb_fpipe(i) + Cb_fpipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cr_filter_products(i) := (Cr_fpipe(i) + Cr_fpipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
 				end loop;
 				
 				-- Sum all multiplication results
@@ -184,13 +188,14 @@ begin
 	generate_output_samples : process(pclk)
 	begin
 		if (rising_edge(pclk)) then
-			Y_dly <= Y_pipe();
-			if (tbd) then
+			if (sample_ready = '1') then
+				Y_dly <= Y_pipe(Y_plen - 2);
+				Cb_flt <= Cb_outpipe(latency - 1);
+				Cr_flt <= Cb_outpipe(latency - 1);
+			else
+				Y_dly <= Y_pipe(Y_plen - 1);
 				Cb_flt <= Cb_processed;
 				Cr_flt <= Cr_processed;
-			else
-				Cb_flt <= Cb_pipe();
-				Cr_flt <= Cr_pipe();
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
