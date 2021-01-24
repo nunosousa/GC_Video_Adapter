@@ -49,7 +49,7 @@ architecture behav of gc_dv_422_to_444 is
 	constant fnorm_shift	: natural := 11; -- Bit shifts required to perform division by 2048.
 	constant latency		: natural := 2;
 	constant CbCr_fplen		: natural := 2*fcoef_taps;
-	constant Y_plen			: natural := 2*CbCr_fplen + latency;
+	constant Y_plen			: natural := 2*CbCr_fplen;
 	
 	-- Pipes for video samples
 	type sample_array_type is array (natural range <>) of unsigned((data_width - 1) downto 0);
@@ -148,8 +148,8 @@ begin
 			if (sample_ready = '1') then
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_filter_products(i) := (Cb_fpipe(i) + Cb_fpipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
-					Cr_filter_products(i) := (Cr_fpipe(i) + Cr_fpipe(2*fcoef_taps - 1 - i)) * fcoefs(i);
+					Cb_filter_products(i) := (Cb_fpipe(i) + Cb_fpipe(CbCr_fplen - 1 - i)) * fcoefs(i);
+					Cr_filter_products(i) := (Cr_fpipe(i) + Cr_fpipe(CbCr_fplen - 1 - i)) * fcoefs(i);
 				end loop;
 				
 				-- Sum all multiplication results
