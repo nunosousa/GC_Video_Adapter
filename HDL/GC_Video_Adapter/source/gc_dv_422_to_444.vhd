@@ -133,8 +133,8 @@ begin
 		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
 		variable Cb_filter_products	: product_array_type;
 		variable Cr_filter_products	: product_array_type;
-		variable Cb_partial_sum		: signed((9 - 1) downto 0);
-		variable Cr_partial_sum		: signed((9 - 1) downto 0);
+		variable Cb_partial_sum		: signed((data_width + 1 - 1) downto 0);
+		variable Cr_partial_sum		: signed((data_width + 1 - 1) downto 0);
 		constant sum_width			: natural := product_width + fcoef_taps - 1; -- Total sum size of sum of products
 		variable Cb_filter_sum		: signed((sum_width - 1) downto 0);
 		variable Cr_filter_sum		: signed((sum_width - 1) downto 0);
@@ -150,40 +150,40 @@ begin
 			if (sample_ready = '1') then
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_partial_sum := Cb_fpipe(i) + Cb_fpipe(CbCr_fplen - 1 - i);
+					Cb_partial_sum := signed(resize(Cb_fpipe(i), data_width + 1)) + signed(resize(Cb_fpipe(CbCr_fplen - 1 - i), data_width + 1));
 					Cb_filter_products(i) := Cb_partial_sum * fcoefs(i);
 					
-					Cr_partial_sum := Cr_fpipe(i) + Cr_fpipe(CbCr_fplen - 1 - i);
+					Cr_partial_sum := signed(resize(Cr_fpipe(i), data_width + 1)) + signed(resize(Cr_fpipe(CbCr_fplen - 1 - i), data_width + 1));
 					Cr_filter_products(i) := Cr_partial_sum * fcoefs(i);
 				end loop;
 				
 				-- Sum all multiplication results
-				Cb_filter_sum := (others => 0);
-				Cr_filter_sum := (others => 0);
+				Cb_filter_sum := to_signed(0, sum_width);
+				Cr_filter_sum := to_signed(0, sum_width);
 				for i in 0 to (fcoef_taps - 1) loop
 					Cb_filter_sum := Cb_filter_sum + Cb_filter_products(i);
 					Cr_filter_sum := Cr_filter_sum + Cr_filter_products(i);
 				end loop;
 				
 				-- Perform normalizing division (using bit shifting)
-				Cb_norm_result <= shift_right(Cb_filter_sum, fnorm_shift);
-				Cr_norm_result <= shift_right(Cr_filter_sum, fnorm_shift);
+				Cb_norm_result := shift_right(Cb_filter_sum, fnorm_shift);
+				Cr_norm_result := shift_right(Cr_filter_sum, fnorm_shift);
 				
 				-- Truncate result
-				if (Cb_norm_result > 255) then
-					Cb_processed <= 255;
-				elsif  (Cb_norm_result < 0) then
-					Cb_processed <= 0;
+				if (Cb_norm_result > to_signed(255, norm_width)) then
+					Cb_processed <= x"FF";
+				elsif  (Cb_norm_result < to_signed(0, norm_width)) then
+					Cb_processed <= x"00";
 				else
-					Cb_processed <= unsigned(resize(Cb_norm_result, 8));
+					Cb_processed <= unsigned(resize(Cb_norm_result, data_width));
 				end if;
 				
-				if (Cr_norm_result > 255) then
-					Cr_processed <= 255;
-				elsif  (Cr_norm_result < 0) then
-					Cr_processed <= 0;
+				if (Cr_norm_result > to_signed(255, norm_width)) then
+					Cr_processed <= x"FF";
+				elsif  (Cr_norm_result < to_signed(0, norm_width)) then
+					Cr_processed <= x"00";
 				else
-					Cr_processed <= unsigned(resize(Cr_norm_result, 8));
+					Cr_processed <= unsigned(resize(Cr_norm_result, data_width));
 				end if;
 			end if; -- if (sample_ready = '0')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
