@@ -86,11 +86,11 @@ begin
 			
 			-- Delay and separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_fpipe <= unsigned(CbCr) & Cr_fpipe(0 to CbCr_plen - 2);
+				Cr_fpipe <= unsigned(CbCr) & Cr_fpipe(0 to CbCr_fplen - 2);
 				Cr_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cr_outpipe(0 to latency - 2);
 				Cr_loaded := '1';
 			else
-				Cb_fpipe <= unsigned(CbCr) & Cb_fpipe(0 to CbCr_plen - 2);
+				Cb_fpipe <= unsigned(CbCr) & Cb_fpipe(0 to CbCr_fplen - 2);
 				Cb_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cb_outpipe(0 to latency - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
@@ -133,10 +133,12 @@ begin
 		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
 		variable Cb_filter_products	: product_array_type;
 		variable Cr_filter_products	: product_array_type;
+		variable Cb_partial_sum		: signed((9 - 1) downto 0);
+		variable Cr_partial_sum		: signed((9 - 1) downto 0);
 		constant sum_width			: natural := product_width + fcoef_taps - 1; -- Total sum size of sum of products
 		variable Cb_filter_sum		: signed((sum_width - 1) downto 0);
 		variable Cr_filter_sum		: signed((sum_width - 1) downto 0);
-		constant norm_width			: natural := norm_width - fnorm_shift; -- Size of normalized sample (after division shift)
+		constant norm_width			: natural := sum_width - fnorm_shift; -- Size of normalized sample (after division shift)
 		variable Cb_norm_result		: signed((norm_width - 1) downto 0);
 		variable Cr_norm_result		: signed((norm_width - 1) downto 0);
 		
@@ -148,8 +150,11 @@ begin
 			if (sample_ready = '1') then
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_filter_products(i) := (Cb_fpipe(i) + Cb_fpipe(CbCr_fplen - 1 - i)) * fcoefs(i);
-					Cr_filter_products(i) := (Cr_fpipe(i) + Cr_fpipe(CbCr_fplen - 1 - i)) * fcoefs(i);
+					Cb_partial_sum := Cb_fpipe(i) + Cb_fpipe(CbCr_fplen - 1 - i);
+					Cb_filter_products(i) := Cb_partial_sum * fcoefs(i);
+					
+					Cr_partial_sum := Cr_fpipe(i) + Cr_fpipe(CbCr_fplen - 1 - i);
+					Cr_filter_products(i) := Cr_partial_sum * fcoefs(i);
 				end loop;
 				
 				-- Sum all multiplication results
@@ -199,5 +204,4 @@ begin
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
-
 end behav;
