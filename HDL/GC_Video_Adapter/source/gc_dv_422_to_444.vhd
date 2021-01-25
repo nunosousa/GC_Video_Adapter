@@ -129,7 +129,8 @@ begin
 
 	-- 
 	fir_filter : process(pclk)
-		constant product_width		: natural := fcoef_width + data_width + 1; -- Product size of filter coefficient with sample
+		constant partial_sum_width	: natural := data_width + 1;
+		constant product_width		: natural := fcoef_width + partial_sum_width; -- Product size of filter coefficient with sample
 		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
 		variable Cb_filter_products	: product_array_type;
 		variable Cr_filter_products	: product_array_type;
@@ -150,10 +151,11 @@ begin
 			if (sample_ready = '1') then
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
-					Cb_partial_sum := signed(resize(Cb_fpipe(i), data_width + 1)) + signed(resize(Cb_fpipe(CbCr_fplen - 1 - i), data_width + 1));
+					Cb_partial_sum := signed(resize(Cb_fpipe(i), partial_sum_width))
+									+ signed(resize(Cb_fpipe(CbCr_fplen - 1 - i), partial_sum_width));
 					Cb_filter_products(i) := Cb_partial_sum * fcoefs(i);
-					
-					Cr_partial_sum := signed(resize(Cr_fpipe(i), data_width + 1)) + signed(resize(Cr_fpipe(CbCr_fplen - 1 - i), data_width + 1));
+					Cr_partial_sum := signed(resize(Cr_fpipe(i), partial_sum_width))
+									+ signed(resize(Cr_fpipe(CbCr_fplen - 1 - i), partial_sum_width));
 					Cr_filter_products(i) := Cr_partial_sum * fcoefs(i);
 				end loop;
 				
