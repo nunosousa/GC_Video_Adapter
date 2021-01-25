@@ -47,15 +47,15 @@ architecture behav of gc_dv_422_to_444 is
 												to_signed(1300, fcoef_width));	-- FIR coefficient at index +1/-1 sample
 	constant fcoef_taps		: natural := 12;
 	constant fnorm_shift	: natural := 11; -- Bit shifts required to perform division by 2048.
-	constant latency		: natural := 2; -- FIR filter processing sample delay
-	constant CbCr_fplen		: natural := 2*fcoef_taps;
-	constant Y_plen			: natural := 2*CbCr_fplen;
 	
 	-- Pipes for video samples
 	type sample_array_type is array (natural range <>) of unsigned((data_width - 1) downto 0);
-	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
+	constant CbCr_fplen		: natural := 2*fcoef_taps;
 	signal Cb_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
 	signal Cr_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
+	constant latency		: natural := 2; -- FIR filter processing sample delay
+	constant Y_plen			: natural := CbCr_fplen + latency;
+	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
 	signal Cb_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
 	signal Cr_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
 	
