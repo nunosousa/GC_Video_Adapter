@@ -47,7 +47,7 @@ architecture behav of gc_dv_422_to_444 is
 												to_signed(1300, fcoef_width));	-- FIR coefficient at index +1/-1 sample
 	constant fcoef_taps		: natural := 12;
 	constant fnorm_shift	: natural := 11; -- Bit shifts required to perform division by 2048.
-	constant latency		: natural := 2;
+	constant latency		: natural := 2; -- FIR filter processing sample delay
 	constant CbCr_fplen		: natural := 2*fcoef_taps;
 	constant Y_plen			: natural := 2*CbCr_fplen;
 	
@@ -60,7 +60,8 @@ architecture behav of gc_dv_422_to_444 is
 	signal Cr_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
 	
 	-- Chroma samples ordering flags
-	signal sample_ready		: std_logic := '0';
+	signal CbCr_raw_sample_ready	: std_logic := '0';
+	signal CbCr_filt_sample_ready	: std_logic := '0';
 	
 	-- Processed chroma samples
 	signal Cb_processed		: unsigned(7 downto 0);
@@ -76,7 +77,7 @@ begin
 			Y_pipe <= (others => x"10");
 			Cb_fpipe <= (others => x"80");
 			Cr_fpipe <= (others => x"80");
-			sample_ready <= '0';
+			CbCr_raw_sample_ready <= '0';
 			Cb_loaded := '0';
 			Cr_loaded := '0';
 			
@@ -87,28 +88,26 @@ begin
 			-- Delay and separate Cb and Cr sample values.
 			if (is_Cr = '1') then
 				Cr_fpipe <= unsigned(CbCr) & Cr_fpipe(0 to CbCr_fplen - 2);
-				Cr_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cr_outpipe(0 to latency - 2);
+				Cr_outpipe <= Cr_fpipe(fcoef_taps) & Cr_outpipe(0 to latency - 2);
 				Cr_loaded := '1';
 			else
 				Cb_fpipe <= unsigned(CbCr) & Cb_fpipe(0 to CbCr_fplen - 2);
-				Cb_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cb_outpipe(0 to latency - 2);
+				Cb_outpipe <= Cr_fpipe(fcoef_taps) & Cb_outpipe(0 to latency - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
 			-- When both Cr and Cb samples are stored, flag them as ready.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
-				sample_ready <= '1';
+				CbCr_raw_sample_ready <= '1';
 				Cb_loaded := '0';
 				Cr_loaded := '0';
-			else
-				sample_ready <= '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
 				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
 					-- Wrong sequence - reset pipes.
-					sample_ready <= '0';
+					CbCr_raw_sample_ready <= '0';
 					Cb_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_fpipe <= (others => x"80");
@@ -117,7 +116,7 @@ begin
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
 					-- Wrong sequence - reset pipes.
-					sample_ready <= '0';
+					CbCr_raw_sample_ready <= '0';
 					Cr_loaded := '0';
 					Y_pipe <= (others => x"10");
 					Cb_fpipe <= (others => x"80");
@@ -130,12 +129,12 @@ begin
 	-- 
 	fir_filter : process(pclk)
 		constant partial_sum_width	: natural := data_width + 1;
+		variable Cb_partial_sum		: signed((partial_sum_width - 1) downto 0);
+		variable Cr_partial_sum		: signed((partial_sum_width - 1) downto 0);
 		constant product_width		: natural := fcoef_width + partial_sum_width; -- Product size of filter coefficient with sample
 		type product_array_type is array (natural range 0 to (fcoef_taps - 1)) of signed((product_width - 1) downto 0);
 		variable Cb_filter_products	: product_array_type;
 		variable Cr_filter_products	: product_array_type;
-		variable Cb_partial_sum		: signed((data_width + 1 - 1) downto 0);
-		variable Cr_partial_sum		: signed((data_width + 1 - 1) downto 0);
 		constant sum_width			: natural := product_width + fcoef_taps - 1; -- Total sum size of sum of products
 		variable Cb_filter_sum		: signed((sum_width - 1) downto 0);
 		variable Cr_filter_sum		: signed((sum_width - 1) downto 0);
@@ -148,7 +147,9 @@ begin
 			-- 
 			
 		elsif (rising_edge(pclk)) then
-			if (sample_ready = '1') then
+			if (CbCr_raw_sample_ready = '1') then
+				CbCr_raw_sample_ready <= '0';
+				
 				-- Perform the filter coefficient multiplication and partial sum of symmetric terms
 				for i in 0 to (fcoef_taps - 1) loop
 					Cb_partial_sum := signed(resize(Cb_fpipe(i), partial_sum_width))
@@ -171,7 +172,7 @@ begin
 				Cb_norm_result := shift_right(Cb_filter_sum, fnorm_shift);
 				Cr_norm_result := shift_right(Cr_filter_sum, fnorm_shift);
 				
-				-- Truncate result
+				-- Limit and truncate result
 				if (Cb_norm_result > to_signed(255, norm_width)) then
 					Cb_processed <= x"FF";
 				elsif  (Cb_norm_result < to_signed(0, norm_width)) then
@@ -187,7 +188,10 @@ begin
 				else
 					Cr_processed <= unsigned(resize(Cr_norm_result, data_width));
 				end if;
-			end if; -- if (sample_ready = '0')
+				
+				-- Flag new filtered chroma sample is ready
+				CbCr_filt_sample_ready <= '1';
+			end if; -- if (CbCr_raw_sample_ready = '0')
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- fir_filter : process(pclk)
 
@@ -195,14 +199,14 @@ begin
 	generate_output_samples : process(pclk)
 	begin
 		if (rising_edge(pclk)) then
-			if (sample_ready = '1') then
-				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 2));
-				Cb_flt <= std_logic_vector(Cb_outpipe(latency - 1));
-				Cr_flt <= std_logic_vector(Cb_outpipe(latency - 1));
-			else
+			if (CbCr_filt_sample_ready = '1') then
 				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 1));
 				Cb_flt <= std_logic_vector(Cb_processed);
 				Cr_flt <= std_logic_vector(Cr_processed);
+			else
+				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 2));
+				Cb_flt <= std_logic_vector(Cb_outpipe(latency - 1));
+				Cr_flt <= std_logic_vector(Cb_outpipe(latency - 1));
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
