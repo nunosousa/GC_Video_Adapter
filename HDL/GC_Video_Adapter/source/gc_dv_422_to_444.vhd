@@ -194,13 +194,13 @@ begin
 	begin
 		if (rising_edge(pclk)) then
 			if (sample_ready = '1') then
-				Y_dly <= Y_pipe(Y_plen - 2);
-				Cb_flt <= Cb_outpipe(latency - 1);
-				Cr_flt <= Cb_outpipe(latency - 1);
+				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 2));
+				Cb_flt <= std_logic_vector(Cb_outpipe(latency - 1));
+				Cr_flt <= std_logic_vector(Cb_outpipe(latency - 1));
 			else
-				Y_dly <= Y_pipe(Y_plen - 1);
-				Cb_flt <= Cb_processed;
-				Cr_flt <= Cr_processed;
+				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 1));
+				Cb_flt <= std_logic_vector(Cb_processed);
+				Cr_flt <= std_logic_vector(Cr_processed);
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
