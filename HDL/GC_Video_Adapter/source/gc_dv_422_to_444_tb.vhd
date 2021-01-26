@@ -95,21 +95,8 @@ begin
 			reset_tb <= test_vectors(i).reset_tb;
 
 			wait for period;
-
-			--assert (pclk_tb = test_vectors(i).pclk_tb) report "Test_vector " & integer'image(i) & " failed  for input pclk = " & std_logic'image(a) & severity error;
-			--assert (Y_tb = test_vectors(i).Y_tb)
-			--assert (CbCr_tb = test_vectors(i).CbCr_tb)
-			--assert (is_Cr_tb = test_vectors(i).is_Cr_tb)
-			--assert (H_sync_tb = test_vectors(i).H_sync_tb)
-			--assert (V_sync_tb = test_vectors(i).V_sync_tb)
-			--assert (C_sync_tb = test_vectors(i).C_sync_tb)
-			--assert (Blanking_tb = test_vectors(i).Blanking_tb)
-			--assert (dvalid_tb = test_vectors(i).dvalid_tb)
-
 		end loop;
 		
 		wait;
-		
 	end process; 
-	
 end behav;
