@@ -53,11 +53,11 @@ architecture behav of gc_dv_422_to_444 is
 	constant CbCr_fplen		: natural := 2*fcoef_taps;
 	signal Cb_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
 	signal Cr_fpipe			: sample_array_type(0 to CbCr_fplen - 1) := (others => x"80");
-	constant latency		: natural := 2; -- FIR filter processing sample delay
-	constant Y_plen			: natural := CbCr_fplen + latency;
+	constant Y_plen			: natural := 2*fcoef_taps + 3; -- FIR filter processing sample delay is 3
 	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
-	signal Cb_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
-	signal Cr_outpipe		: sample_array_type(0 to latency - 1) := (others => x"80");
+	constant CbCr_outplen	: natural := fcoef_taps + 2;
+	signal Cb_outpipe		: sample_array_type(0 to CbCr_outplen - 1) := (others => x"80");
+	signal Cr_outpipe		: sample_array_type(0 to CbCr_outplen - 1) := (others => x"80");
 	
 	-- Chroma samples ordering flags
 	signal CbCr_raw_sample_ready	: std_logic := '0';
@@ -88,11 +88,11 @@ begin
 			-- Delay and separate Cb and Cr sample values.
 			if (is_Cr = '1') then
 				Cr_fpipe <= unsigned(CbCr) & Cr_fpipe(0 to CbCr_fplen - 2);
-				Cr_outpipe <= Cr_fpipe(fcoef_taps) & Cr_outpipe(0 to latency - 2);
+				Cr_outpipe <= Cr_fpipe(fcoef_taps - 1) & Cr_outpipe(0 to CbCr_outplen - 2);
 				Cr_loaded := '1';
 			else
 				Cb_fpipe <= unsigned(CbCr) & Cb_fpipe(0 to CbCr_fplen - 2);
-				Cb_outpipe <= Cr_fpipe(fcoef_taps) & Cb_outpipe(0 to latency - 2);
+				Cb_outpipe <= Cb_fpipe(fcoef_taps - 1) & Cb_outpipe(0 to CbCr_outplen - 2);
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
@@ -199,14 +199,14 @@ begin
 	generate_output_samples : process(pclk)
 	begin
 		if (rising_edge(pclk)) then
+			Y_dly <= std_logic_vector(Y_pipe(Y_plen - 1));
+			
 			if (CbCr_filt_sample_ready = '1') then
-				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 1));
 				Cb_flt <= std_logic_vector(Cb_processed);
 				Cr_flt <= std_logic_vector(Cr_processed);
 			else
-				Y_dly <= std_logic_vector(Y_pipe(Y_plen - 2));
-				Cb_flt <= std_logic_vector(Cb_outpipe(latency - 1));
-				Cr_flt <= std_logic_vector(Cb_outpipe(latency - 1));
+				Cb_flt <= std_logic_vector(Cb_outpipe(CbCr_outplen - 1));
+				Cr_flt <= std_logic_vector(Cb_outpipe(CbCr_outplen - 1));
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
