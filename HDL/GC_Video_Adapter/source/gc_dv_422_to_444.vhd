@@ -39,9 +39,6 @@ architecture replicate of gc_dv_422_to_444 is
 	signal Cr_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
 	constant Y_plen			: natural := 3;
 	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
-	
-	-- Chroma samples ordering flags
-	signal CbCr_sample_ready	: std_logic := '0';
 
 begin
 	feed_sample_pipes : process(pclk)
