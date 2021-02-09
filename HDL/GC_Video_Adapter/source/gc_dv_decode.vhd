@@ -67,6 +67,8 @@ begin
 			if (vsample_count < 5) then
 				vsample_count <= vsample_count + 1;
 			else
+				clk_divider <= (others => '1');
+				vsample_count <= 0;
 				dvalid <= '0';
 				Y <= x"10";
 				CbCr <= x"80";

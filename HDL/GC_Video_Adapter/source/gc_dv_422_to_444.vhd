@@ -17,18 +17,102 @@ entity gc_dv_422_to_444 is
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
 		reset		: in	std_logic;
-		Y_dly		: out	std_logic_vector(7 downto 0);
-		Cb_flt		: out	std_logic_vector(7 downto 0);
-		Cr_flt		: out	std_logic_vector(7 downto 0);
-		H_sync_dly	: out	std_logic;
-		V_sync_dly	: out	std_logic;
-		C_sync_dly	: out	std_logic;
-		dvalid_dly	: out	std_logic
+		Y_out		: out	std_logic_vector(7 downto 0);
+		Cb_out		: out	std_logic_vector(7 downto 0);
+		Cr_out		: out	std_logic_vector(7 downto 0);
+		H_sync_out	: out	std_logic;
+		V_sync_out	: out	std_logic;
+		C_sync_out	: out	std_logic;
+		Blanking_out: in	std_logic;
+		dvalid_out	: out	std_logic
 	);
 
 end entity;
 
-architecture behav of gc_dv_422_to_444 is
+-------- Replicate Architecture -----------------------------------------------
+architecture replicate of gc_dv_422_to_444 is
+	-- Pipes for video samples
+	constant data_width		: natural := 8;
+	type sample_array_type is array (natural range <>) of std_logic_vector((data_width - 1) downto 0);
+	constant CbCr_plen		: natural := 2;
+	signal Cb_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cr_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	constant Y_plen			: natural := 3;
+	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
+	
+	-- Chroma samples ordering flags
+	signal CbCr_sample_ready	: std_logic := '0';
+
+begin
+	feed_sample_pipes : process(pclk)
+		variable Cb_loaded		: std_logic := '0';
+		variable Cr_loaded		: std_logic := '0';
+		variable Cb_sample		: std_logic := '0';
+		variable Cr_sample		: std_logic := '0';
+	begin
+		if ((reset = '1') or (dvalid = '0')) then
+			-- Reset pipes.
+			Y_pipe <= (others => x"10");
+			Cb_pipe <= (others => x"80");
+			Cr_pipe <= (others => x"80");
+			Cb_loaded := '0';
+			Cr_loaded := '0';
+			
+		elsif (rising_edge(pclk)) then
+			-- Delay Y sample values
+			Y_pipe <= Y & Y_pipe(0 to Y_plen - 2);
+			
+			-- Separate Cb and Cr sample values.
+			if (is_Cr = '1') then
+				Cr_sample := CbCr;
+				Cr_loaded := '1';
+			else
+				Cb_sample <= CbCr;
+				Cb_loaded := '1';
+			end if; -- if (is_Cr = '1')
+			
+			-- When both Cr and Cb samples are stored, flag them as ready.
+			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
+				Cr_pipe <= Cr_sample & Cr_pipe(0 to CbCr_plen - 2);
+				Cb_pipe <= Cb_sample & Cb_pipe(0 to CbCr_plen - 2);
+				Cb_loaded := '0';
+				Cr_loaded := '0';
+			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
+			
+			-- Detect wrong chroma sample order.
+			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
+				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
+					-- Wrong sequence - reset pipes.
+					Cb_loaded := '0';
+					Y_pipe <= (others => x"10");
+					Cb_pipe <= (others => x"80");
+					Cr_pipe <= (others => x"80");
+				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
+			else					-- If frame is even, then first chroma sample is Cb
+				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
+					-- Wrong sequence - reset pipes.
+					Cr_loaded := '0';
+					Y_pipe <= (others => x"10");
+					Cb_pipe <= (others => x"80");
+					Cr_pipe <= (others => x"80");
+				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
+			end if; -- if (is_odd = '1')
+
+			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
+			Y_out <= Y_pipe(Y_plen - 1);
+			Cb_out <= Cb_pipe(CbCr_plen - 1);
+			Cr_out <= Cr_pipe(CbCr_plen - 1);
+			H_sync_out <= ;
+			V_sync_out <= ;
+			C_sync_out <= ;
+			Blanking_out <= ;
+			dvalid_out <= ;
+		end if;	-- if ((reset = '1') or (dvalid = '0'))
+	end process; -- feed_sample_pipes : process(pclk)
+end replicate;
+
+-------- Interpolate Architecture ---------------------------------------------
+architecture interpolate of gc_dv_422_to_444 is
 	-- FIR filter configuration
 	constant fcoef_width	: natural := 12; -- Bit width of the filter coefficients including sign bit.
 	constant data_width		: natural := 8;
@@ -176,7 +260,7 @@ begin
 				if (Cb_norm_result > to_signed(255, norm_width)) then
 					Cb_processed <= x"FF";
 				elsif  (Cb_norm_result < to_signed(0, norm_width)) then
-					Cb_processed <= x"00";
+					Cb_processed <= x"00"; -- Check for correct lower level
 				else
 					Cb_processed <= unsigned(resize(Cb_norm_result, data_width));
 				end if;
@@ -184,7 +268,7 @@ begin
 				if (Cr_norm_result > to_signed(255, norm_width)) then
 					Cr_processed <= x"FF";
 				elsif  (Cr_norm_result < to_signed(0, norm_width)) then
-					Cr_processed <= x"00";
+					Cr_processed <= x"00"; -- Check for correct lower level
 				else
 					Cr_processed <= unsigned(resize(Cr_norm_result, data_width));
 				end if;
@@ -210,4 +294,4 @@ begin
 			end if;
 		end if;
 	end process; -- generate_output_samples : process(pclk)
-end behav;
+end interpolate;
