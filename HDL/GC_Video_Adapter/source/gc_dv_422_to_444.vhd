@@ -80,6 +80,14 @@ begin
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
+			-- If blanking video, load both chroma samples with the same value
+			if (Blanking = '1') then
+				Cr_pipe(0) <= CbCr;
+				Cb_pipe(0) <= CbCr;
+				Cr_loaded := '1';
+				Cb_loaded := '1';
+			end if; -- if (Blanking = '1')
+
 			-- When both Cr and Cb samples are stored, shift them to output position.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
 				Cr_pipe <= x"80" & Cr_pipe(0 to CbCr_plen - 2);
@@ -91,29 +99,13 @@ begin
 			-- Detect wrong chroma sample order.
 			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
 				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
-					-- Wrong sequence - reset pipes.
+					-- Wrong sequence - reset chroma pipe.
 					Cb_loaded := '0';
-					Y_pipe <= (others => x"10");
-					Cb_pipe <= (others => x"80");
-					Cr_pipe <= (others => x"80");
-					H_sync_out <= (others => '0');
-					V_sync_out <= (others => '0');
-					C_sync_out <= (others => '0');
-					Blanking_out <= (others => '0');
-					dvalid_out <= (others => '0');
 				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
-					-- Wrong sequence - reset pipes.
+					-- Wrong sequence - reset chroma pipe.
 					Cr_loaded := '0';
-					Y_pipe <= (others => x"10");
-					Cb_pipe <= (others => x"80");
-					Cr_pipe <= (others => x"80");
-					H_sync_out <= (others => '0');
-					V_sync_out <= (others => '0');
-					C_sync_out <= (others => '0');
-					Blanking_out <= (others => '0');
-					dvalid_out <= (others => '0');
 				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			end if; -- if (is_odd = '1')
 
