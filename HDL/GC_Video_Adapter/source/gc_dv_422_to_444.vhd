@@ -33,8 +33,8 @@ architecture behav of gc_dv_422_to_444 is
 	-- Pipes for video samples and flags
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	constant CbCr_plen		: natural := 2;
-	signal Cb_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
-	signal Cr_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cb_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cr_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
 	constant delay_plen		: natural := 3;
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
@@ -49,15 +49,20 @@ begin
 		variable Cr_loaded		: std_logic := '0';
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
-			-- Reset pipes.
+			-- Reset pipes and flags
 			Y_pipe <= (others => x"10");
 			Cb_pipe <= (others => x"80");
 			Cr_pipe <= (others => x"80");
+			H_sync_out <= (others => '0');
+			V_sync_out <= (others => '0');
+			C_sync_out <= (others => '0');
+			Blanking_out <= (others => '0');
+			dvalid_out <= (others => '0');
 			Cb_loaded := '0';
 			Cr_loaded := '0';
 			
 		elsif (rising_edge(pclk)) then
-			-- Delay Y sample values
+			-- Delay Y sample values and flags
 			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
 			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
 			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
@@ -67,7 +72,7 @@ begin
 			
 			-- Separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_pipe(0) := CbCr;
+				Cr_pipe(0) <= CbCr;
 				Cr_loaded := '1';
 			else
 				Cb_pipe(0) <= CbCr;
@@ -78,8 +83,8 @@ begin
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
 				Cr_pipe <= x"80" & Cr_pipe(0 to CbCr_plen - 2);
 				Cb_pipe <= x"80" & Cb_pipe(0 to CbCr_plen - 2);
-				Cb_loaded := '0';
 				Cr_loaded := '0';
+				Cb_loaded := '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Detect wrong chroma sample order.
@@ -90,6 +95,11 @@ begin
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
 					Cr_pipe <= (others => x"80");
+					H_sync_out <= (others => '0');
+					V_sync_out <= (others => '0');
+					C_sync_out <= (others => '0');
+					Blanking_out <= (others => '0');
+					dvalid_out <= (others => '0');
 				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
 			else					-- If frame is even, then first chroma sample is Cb
 				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
@@ -98,6 +108,11 @@ begin
 					Y_pipe <= (others => x"10");
 					Cb_pipe <= (others => x"80");
 					Cr_pipe <= (others => x"80");
+					H_sync_out <= (others => '0');
+					V_sync_out <= (others => '0');
+					C_sync_out <= (others => '0');
+					Blanking_out <= (others => '0');
+					dvalid_out <= (others => '0');
 				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			end if; -- if (is_odd = '1')
 
