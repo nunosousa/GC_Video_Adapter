@@ -22,13 +22,14 @@ architecture behav of gc_dv_422_to_444_tb is
 			Blanking	: in	std_logic;
 			dvalid		: in	std_logic;
 			reset		: in	std_logic;
-			Y_dly		: out	std_logic_vector(7 downto 0);
-			Cb_flt		: out	std_logic_vector(7 downto 0);
-			Cr_flt		: out	std_logic_vector(7 downto 0);
-			H_sync_dly	: out	std_logic;
-			V_sync_dly	: out	std_logic;
-			C_sync_dly	: out	std_logic;
-			dvalid_dly	: out	std_logic
+			Y_out		: out	std_logic_vector(7 downto 0);
+			Cb_out		: out	std_logic_vector(7 downto 0);
+			Cr_out		: out	std_logic_vector(7 downto 0);
+			H_sync_out	: out	std_logic;
+			V_sync_out	: out	std_logic;
+			C_sync_out	: out	std_logic;
+			Blanking_out: out	std_logic;
+			dvalid_out	: out	std_logic
 		);
 	end component;
 	
@@ -44,13 +45,14 @@ architecture behav of gc_dv_422_to_444_tb is
 	signal Blanking_tb		: std_logic;
 	signal dvalid_tb		: std_logic;
 	signal reset_tb			: std_logic;
-	signal Y_dly_tb			: std_logic_vector(7 downto 0);
-	signal Cb_flt_tb		: std_logic_vector(7 downto 0);
-	signal Cr_flt_tb		: std_logic_vector(7 downto 0);
-	signal H_sync_dly_tb	: std_logic;
-	signal V_sync_dly_tb	: std_logic;
-	signal C_sync_dly_tb	: std_logic;
-	signal dvalid_dly_tb	: std_logic;
+	signal Y_out_tb			: std_logic_vector(7 downto 0);
+	signal Cb_out_tb		: std_logic_vector(7 downto 0);
+	signal Cr_out_tb		: std_logic_vector(7 downto 0);
+	signal H_sync_out_tb	: std_logic;
+	signal V_sync_out_tb	: std_logic;
+	signal C_sync_out_tb	: std_logic;
+	signal Blanking_out_tb	: std_logic;
+	signal dvalid_out_tb	: std_logic;
 	
 	-- Declare record type to build a test vector for this test bench
 	type test_vector is record
@@ -65,13 +67,14 @@ architecture behav of gc_dv_422_to_444_tb is
 		Blanking_tb		: std_logic;
 		dvalid_tb		: std_logic;
 		reset_tb		: std_logic;
-		Y_dly_tb		: std_logic_vector(7 downto 0);
-		Cb_flt_tb		: std_logic_vector(7 downto 0);
-		Cr_flt_tb		: std_logic_vector(7 downto 0);
-		H_sync_dly_tb	: std_logic;
-		V_sync_dly_tb	: std_logic;
-		C_sync_dly_tb	: std_logic;
-		dvalid_dly_tb	: std_logic;
+		Y_out_tb		: std_logic_vector(7 downto 0);
+		Cb_out_tb		: std_logic_vector(7 downto 0);
+		Cr_out_tb		: std_logic_vector(7 downto 0);
+		H_sync_out_tb	: std_logic;
+		V_sync_out_tb	: std_logic;
+		C_sync_out_tb	: std_logic;
+		Blanking_out_tb	: std_logic;
+		dvalid_out_tb	: std_logic;
 	end record;
 
 	type test_vector_array is array (natural range <>) of test_vector;
@@ -119,24 +122,25 @@ architecture behav of gc_dv_422_to_444_tb is
 begin
 	
 	uut: component gc_dv_422_to_444 port map (
-		pclk		=> pclk_tb,
-		Y			=> Y_tb,
-		CbCr		=> CbCr_tb,
-		is_Cr		=> is_Cr_tb,
-		is_odd		=> is_odd_tb,
-		H_sync		=> H_sync_tb,
-		V_sync		=> V_sync_tb,
-		C_sync		=> C_sync_tb,
-		Blanking	=> Blanking_tb,
-		dvalid		=> dvalid_tb,
-		reset		=> reset_tb,
-		Y_dly		=> Y_dly_tb,
-		Cb_flt		=> Cb_flt_tb,
-		Cr_flt		=> Cr_flt_tb,
-		H_sync_dly	=> H_sync_dly_tb,
-		V_sync_dly	=> V_sync_dly_tb,
-		C_sync_dly	=> C_sync_dly_tb,
-		dvalid_dly	=> dvalid_dly_tb
+		pclk			=> pclk_tb,
+		Y				=> Y_tb,
+		CbCr			=> CbCr_tb,
+		is_Cr			=> is_Cr_tb,
+		is_odd			=> is_odd_tb,
+		H_sync			=> H_sync_tb,
+		V_sync			=> V_sync_tb,
+		C_sync			=> C_sync_tb,
+		Blanking		=> Blanking_tb,
+		dvalid			=> dvalid_tb,
+		reset			=> reset_tb,
+		Y_out			=> Y_out_tb,
+		Cb_out			=> Cb_out_tb,
+		Cr_out			=> Cr_out_tb,
+		H_sync_out		=> H_sync_out_tb,
+		V_sync_out		=> V_sync_out_tb,
+		C_sync_out		=> C_sync_out_tb,
+		Blanking_out_tb	=> Blanking_out_tb,
+		dvalid_out		=> dvalid_out_tb
 	);
 	
 	tb1 : process
