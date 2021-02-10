@@ -35,7 +35,7 @@ architecture behav of gc_dv_422_to_444 is
 	constant CbCr_plen		: natural := 2;
 	signal Cb_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
 	signal Cr_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
-	constant delay_plen		: natural := 3;
+	constant delay_plen		: natural := 2;
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
 	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
