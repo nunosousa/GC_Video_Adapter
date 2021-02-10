@@ -23,7 +23,7 @@ entity gc_dv_422_to_444 is
 		H_sync_out	: out	std_logic;
 		V_sync_out	: out	std_logic;
 		C_sync_out	: out	std_logic;
-		Blanking_out: in	std_logic;
+		Blanking_out: out	std_logic;
 		dvalid_out	: out	std_logic
 	);
 
@@ -32,14 +32,18 @@ end entity;
 -------- Replicate Architecture -----------------------------------------------
 architecture replicate of gc_dv_422_to_444 is
 	-- Pipes for video samples
-	constant data_width		: natural := 8;
-	type sample_array_type is array (natural range <>) of std_logic_vector((data_width - 1) downto 0);
+	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	constant CbCr_plen		: natural := 2;
 	signal Cb_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
 	signal Cr_fpipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
-	constant Y_plen			: natural := 3;
-	signal Y_pipe			: sample_array_type(0 to Y_plen - 1) := (others => x"10");
-
+	constant delay_plen		: natural := 3;
+	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
+	type flag_array_type is array (natural range <>) of std_logic;
+	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
+	signal V_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
+	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
+	signal Blanking_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
+	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 begin
 	feed_sample_pipes : process(pclk)
 		variable Cb_loaded		: std_logic := '0';
@@ -57,7 +61,12 @@ begin
 			
 		elsif (rising_edge(pclk)) then
 			-- Delay Y sample values
-			Y_pipe <= Y & Y_pipe(0 to Y_plen - 2);
+			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
+			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
+			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
+			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
+			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
+			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
 			
 			-- Separate Cb and Cr sample values.
 			if (is_Cr = '1') then
@@ -96,14 +105,14 @@ begin
 			end if; -- if (is_odd = '1')
 
 			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
-			Y_out <= Y_pipe(Y_plen - 1);
+			Y_out <= Y_pipe(delay_plen - 1);
 			Cb_out <= Cb_pipe(CbCr_plen - 1);
 			Cr_out <= Cr_pipe(CbCr_plen - 1);
-			H_sync_out <= ;
-			V_sync_out <= ;
-			C_sync_out <= ;
-			Blanking_out <= ;
-			dvalid_out <= ;
+			H_sync_out <= H_sync_pipe(delay_plen - 1);
+			V_sync_out <= V_sync_pipe(delay_plen - 1);
+			C_sync_out <= C_sync_pipe(delay_plen - 1);
+			Blanking_out <= Blanking_pipe(delay_plen - 1);
+			dvalid_out <= dvalid_pipe(delay_plen - 1);
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- feed_sample_pipes : process(pclk)
 end replicate;
