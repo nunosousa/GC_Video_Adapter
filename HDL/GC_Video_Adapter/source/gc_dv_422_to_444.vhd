@@ -48,8 +48,6 @@ begin
 	feed_sample_pipes : process(pclk)
 		variable Cb_loaded		: std_logic := '0';
 		variable Cr_loaded		: std_logic := '0';
-		variable Cb_sample		: std_logic := '0';
-		variable Cr_sample		: std_logic := '0';
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes.
