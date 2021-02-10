@@ -43,10 +43,11 @@ architecture behav of gc_dv_422_to_444 is
 	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal Blanking_pipe	: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
+
 begin
 	feed_sample_pipes : process(pclk)
-		variable Cb_loaded		: std_logic := '0';
-		variable Cr_loaded		: std_logic := '0';
+		variable Cb_loaded	: std_logic := '0';
+		variable Cr_loaded	: std_logic := '0';
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes and flags
