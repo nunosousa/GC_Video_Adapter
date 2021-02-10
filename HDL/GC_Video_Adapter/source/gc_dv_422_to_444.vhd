@@ -61,17 +61,17 @@ begin
 			
 			-- Separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_sample := CbCr;
+				Cr_pipe(0) := CbCr;
 				Cr_loaded := '1';
 			else
-				Cb_sample <= CbCr;
+				Cb_pipe(0) <= CbCr;
 				Cb_loaded := '1';
 			end if; -- if (is_Cr = '1')
 			
-			-- When both Cr and Cb samples are stored, flag them as ready.
+			-- When both Cr and Cb samples are stored, shift them to output position.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
-				Cr_pipe <= Cr_sample & Cr_pipe(0 to CbCr_plen - 2);
-				Cb_pipe <= Cb_sample & Cb_pipe(0 to CbCr_plen - 2);
+				Cr_pipe <= x"80" & Cr_pipe(0 to CbCr_plen - 2);
+				Cb_pipe <= x"80" & Cb_pipe(0 to CbCr_plen - 2);
 				Cb_loaded := '0';
 				Cr_loaded := '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
