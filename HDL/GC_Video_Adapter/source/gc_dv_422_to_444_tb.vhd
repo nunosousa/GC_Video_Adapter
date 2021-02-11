@@ -67,14 +67,6 @@ architecture behav of gc_dv_422_to_444_tb is
 		Blanking_tb		: std_logic;
 		dvalid_tb		: std_logic;
 		reset_tb		: std_logic;
-		Y_out_tb		: std_logic_vector(7 downto 0);
-		Cb_out_tb		: std_logic_vector(7 downto 0);
-		Cr_out_tb		: std_logic_vector(7 downto 0);
-		H_sync_out_tb	: std_logic;
-		V_sync_out_tb	: std_logic;
-		C_sync_out_tb	: std_logic;
-		Blanking_out_tb	: std_logic;
-		dvalid_out_tb	: std_logic;
 	end record;
 
 	type test_vector_array is array (natural range <>) of test_vector;
@@ -139,7 +131,7 @@ begin
 		H_sync_out		=> H_sync_out_tb,
 		V_sync_out		=> V_sync_out_tb,
 		C_sync_out		=> C_sync_out_tb,
-		Blanking_out_tb	=> Blanking_out_tb,
+		Blanking_out	=> Blanking_out_tb,
 		dvalid_out		=> dvalid_out_tb
 	);
 	
