@@ -32,9 +32,8 @@ end entity;
 architecture behav of gc_dv_422_to_444 is
 	-- Pipes for video samples and flags
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
-	constant CbCr_plen		: natural := 2;
-	signal Cb_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
-	signal Cr_pipe			: sample_array_type(0 to CbCr_plen - 1) := (others => x"80");
+	signal Cb_sample		: std_logic_vector(7 downto 0) := x"83";
+	signal Cr_sample		: std_logic_vector(7 downto 0) := x"84";
 	constant delay_plen		: natural := 2;
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
@@ -43,17 +42,19 @@ architecture behav of gc_dv_422_to_444 is
 	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal Blanking_pipe	: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
-
+	
+	-- Chroma flags
+	signal Cb_loaded		: std_logic := '0';
+	signal Cr_loaded		: std_logic := '0';
+	
 begin
-	feed_sample_pipes : process(pclk)
-		variable Cb_loaded	: std_logic := '0';
-		variable Cr_loaded	: std_logic := '0';
+	duplicate_chroma_samples : process(pclk)
 	begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes and flags
 			Y_pipe <= (others => x"10");
-			Cb_pipe <= (others => x"80");
-			Cr_pipe <= (others => x"80");
+			Cb_sample <= x"83";
+			Cr_sample <= x"84";
 			Y_out <= x"10";
 			Cb_out <= x"80";
 			Cr_out <= x"80";
@@ -62,8 +63,8 @@ begin
 			C_sync_out <= '0';
 			Blanking_out <= '0';
 			dvalid_out <= '0';
-			Cb_loaded := '0';
-			Cr_loaded := '0';
+			Cb_loaded <= '0';
+			Cr_loaded <= '0';
 			
 		elsif (rising_edge(pclk)) then
 			-- Delay Y sample values and flags
@@ -73,31 +74,31 @@ begin
 			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
 			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
 			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
+
+			-- When both Cr and Cb samples are stored, shift them to output position.
+			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
+				Cr_out <= Cr_sample;
+				Cb_out <= Cb_sample;
+				Cr_loaded <= '0';
+				Cb_loaded <= '0';
+			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			-- Separate Cb and Cr sample values.
 			if (is_Cr = '1') then
-				Cr_pipe(0) <= CbCr;
-				Cr_loaded := '1';
+				Cr_sample <= CbCr;
+				Cr_loaded <= '1';
 			else
-				Cb_pipe(0) <= CbCr;
-				Cb_loaded := '1';
+				Cb_sample <= CbCr;
+				Cb_loaded <= '1';
 			end if; -- if (is_Cr = '1')
 			
 			-- If blanking video, load both chroma samples with the same value
 			if (Blanking = '1') then
-				Cr_pipe(0) <= CbCr;
-				Cb_pipe(0) <= CbCr;
-				Cr_loaded := '1';
-				Cb_loaded := '1';
+				Cr_sample <= CbCr;
+				Cb_sample <= CbCr;
+				Cr_loaded <= '1';
+				Cb_loaded <= '1';
 			end if; -- if (Blanking = '1')
-
-			-- When both Cr and Cb samples are stored, shift them to output position.
-			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
-				Cr_pipe <= x"80" & Cr_pipe(0 to CbCr_plen - 2);
-				Cb_pipe <= x"80" & Cb_pipe(0 to CbCr_plen - 2);
-				Cr_loaded := '0';
-				Cb_loaded := '0';
-			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
 			---- Detect wrong chroma sample order.
 			--if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
@@ -114,8 +115,7 @@ begin
 
 			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
 			Y_out <= Y_pipe(delay_plen - 1);
-			Cb_out <= Cb_pipe(CbCr_plen - 1);
-			Cr_out <= Cr_pipe(CbCr_plen - 1);
+
 			H_sync_out <= H_sync_pipe(delay_plen - 1);
 			V_sync_out <= V_sync_pipe(delay_plen - 1);
 			C_sync_out <= C_sync_pipe(delay_plen - 1);
