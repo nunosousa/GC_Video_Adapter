@@ -54,11 +54,11 @@ begin
 			Y_pipe <= (others => x"10");
 			Cb_pipe <= (others => x"80");
 			Cr_pipe <= (others => x"80");
-			H_sync_out <= (others => '0');
-			V_sync_out <= (others => '0');
-			C_sync_out <= (others => '0');
-			Blanking_out <= (others => '0');
-			dvalid_out <= (others => '0');
+			H_sync_out <= '0';
+			V_sync_out <= '0';
+			C_sync_out <= '0';
+			Blanking_out <= '0';
+			dvalid_out <= '0';
 			Cb_loaded := '0';
 			Cr_loaded := '0';
 			
