@@ -54,6 +54,9 @@ begin
 			Y_pipe <= (others => x"10");
 			Cb_pipe <= (others => x"80");
 			Cr_pipe <= (others => x"80");
+			Y_out <= x"10";
+			Cb_out <= x"80";
+			Cr_out <= x"80";
 			H_sync_out <= '0';
 			V_sync_out <= '0';
 			C_sync_out <= '0';
@@ -96,18 +99,18 @@ begin
 				Cb_loaded := '0';
 			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
 			
-			-- Detect wrong chroma sample order.
-			if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
-				if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
-					-- Wrong sequence - reset chroma pipe.
-					Cb_loaded := '0';
-				end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
-			else					-- If frame is even, then first chroma sample is Cb
-				if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
-					-- Wrong sequence - reset chroma pipe.
-					Cr_loaded := '0';
-				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
-			end if; -- if (is_odd = '1')
+			---- Detect wrong chroma sample order.
+			--if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
+			--	if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
+			--		-- Wrong sequence - reset chroma pipe.
+			--		Cb_loaded := '0';
+			--	end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
+			--else					-- If frame is even, then first chroma sample is Cb
+			--	if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
+			--		-- Wrong sequence - reset chroma pipe.
+			--		Cr_loaded := '0';
+			--	end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
+			--end if; -- if (is_odd = '1')
 
 			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
 			Y_out <= Y_pipe(delay_plen - 1);
