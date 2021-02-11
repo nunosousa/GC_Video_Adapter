@@ -30,11 +30,17 @@ entity gc_dv_422_to_444 is
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
+	-- Chroma samples
+	signal Cb_sample		: std_logic_vector(7 downto 0) := x"80";
+	signal Cr_sample		: std_logic_vector(7 downto 0) := x"80";
+	
+	-- Chroma flags
+	signal Cb_loaded		: std_logic := '0';
+	signal Cr_loaded		: std_logic := '0';
+	
 	-- Pipes for video samples and flags
-	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
-	signal Cb_sample		: std_logic_vector(7 downto 0) := x"83";
-	signal Cr_sample		: std_logic_vector(7 downto 0) := x"84";
 	constant delay_plen		: natural := 2;
+	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
 	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
@@ -42,10 +48,6 @@ architecture behav of gc_dv_422_to_444 is
 	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal Blanking_pipe	: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
-	
-	-- Chroma flags
-	signal Cb_loaded		: std_logic := '0';
-	signal Cr_loaded		: std_logic := '0';
 	
 begin
 	duplicate_chroma_samples : process(pclk)
@@ -115,7 +117,6 @@ begin
 
 			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
 			Y_out <= Y_pipe(delay_plen - 1);
-
 			H_sync_out <= H_sync_pipe(delay_plen - 1);
 			V_sync_out <= V_sync_pipe(delay_plen - 1);
 			C_sync_out <= C_sync_pipe(delay_plen - 1);
