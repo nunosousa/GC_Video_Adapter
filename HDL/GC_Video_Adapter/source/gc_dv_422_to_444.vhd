@@ -55,8 +55,8 @@ begin
 		if ((reset = '1') or (dvalid = '0')) then
 			-- Reset pipes and flags
 			Y_pipe <= (others => x"10");
-			Cb_sample <= x"83";
-			Cr_sample <= x"84";
+			Cb_sample <= x"80";
+			Cr_sample <= x"80";
 			Y_out <= x"10";
 			Cb_out <= x"80";
 			Cr_out <= x"80";
