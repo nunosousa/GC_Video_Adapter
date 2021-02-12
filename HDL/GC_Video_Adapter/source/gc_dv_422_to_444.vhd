@@ -26,7 +26,6 @@ entity gc_dv_422_to_444 is
 		Blanking_out: out	std_logic;
 		dvalid_out	: out	std_logic
 	);
-
 end entity;
 
 architecture behav of gc_dv_422_to_444 is
@@ -69,15 +68,7 @@ begin
 			Cr_loaded <= '0';
 			
 		elsif (rising_edge(pclk)) then
-			-- Delay Y sample values and flags
-			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
-			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
-			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
-			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
-			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
-			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
-
-			-- When both Cr and Cb samples are stored, shift them to output position.
+			-- When both Cr and Cb samples are stored, shift them to output.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
 				Cr_out <= Cr_sample;
 				Cb_out <= Cb_sample;
@@ -94,7 +85,7 @@ begin
 				Cb_loaded <= '1';
 			end if; -- if (is_Cr = '1')
 			
-			-- If blanking video, load both chroma samples with the same value
+			-- If blanking video, load both chroma samples with the same blanking value
 			if (Blanking = '1') then
 				Cr_sample <= CbCr;
 				Cb_sample <= CbCr;
@@ -114,8 +105,16 @@ begin
 			--		Cr_loaded := '0';
 			--	end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			--end if; -- if (is_odd = '1')
+			
+			-- Delay Y sample values and flags
+			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
+			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
+			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
+			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
+			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
+			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
 
-			-- Copy input samples to output, or in the absence of new chroma samples, replicate them
+			-- Copy delayed samples to output
 			Y_out <= Y_pipe(delay_plen - 1);
 			H_sync_out <= H_sync_pipe(delay_plen - 1);
 			V_sync_out <= V_sync_pipe(delay_plen - 1);
