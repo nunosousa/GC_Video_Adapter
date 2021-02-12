@@ -51,7 +51,7 @@ architecture behav of gc_dv_422_to_444 is
 begin
 	duplicate_chroma_samples : process(pclk)
 	begin
-		if ((reset = '1') or (dvalid = '0')) then
+		if (reset = '1') then
 			-- Reset pipes and flags
 			Y_pipe <= (others => x"10");
 			Cb_sample <= x"80";
@@ -121,6 +121,18 @@ begin
 			C_sync_out <= C_sync_pipe(delay_plen - 1);
 			Blanking_out <= Blanking_pipe(delay_plen - 1);
 			dvalid_out <= dvalid_pipe(delay_plen - 1);
+			
+			--if (dvalid_pipe(delay_plen - 1) = '0') then
+			--	-- Set outputs to the default values
+			--	Y_out <= x"10";
+			--	Cb_out <= x"80";
+			--	Cr_out <= x"80";
+			--	H_sync_out <= '0';
+			--	V_sync_out <= '0';
+			--	C_sync_out <= '0';
+			--	Blanking_out <= '0';
+			--	dvalid_out <= '0';
+			--end if;
 		end if;	-- if ((reset = '1') or (dvalid = '0'))
 	end process; -- feed_sample_pipes : process(pclk)
 end behav;
