@@ -100,39 +100,6 @@ begin
 				Cb_sample <= CbCr;
 				Cb_loaded <= '1';
 			end if; -- if (is_Cr = '1')
-			
-			---- If blanking video, load both chroma samples with the same blanking value
-			--if (Blanking_pipe(delay_plen - 1) = '1') then
-			--	Cr_sample <= CbCr;
-			--	Cb_sample <= CbCr;
-			--	Cr_loaded <= '1';
-			--	Cb_loaded <= '1';
-			--end if; -- if (Blanking = '1')
-			
-			---- Detect wrong chroma sample order.
-			--if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
-			--	if ((Cr_loaded = '0') and (Cb_loaded = '1')) then
-			--		-- Wrong sequence - reset chroma pipe.
-			--		Cb_loaded := '0';
-			--	end if; -- if ((Cr_loaded = '0') and (Cb_loaded = '1'))
-			--else					-- If frame is even, then first chroma sample is Cb
-			--	if ((Cr_loaded = '1') and (Cb_loaded = '0')) then
-			--		-- Wrong sequence - reset chroma pipe.
-			--		Cr_loaded := '0';
-			--	end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
-			--end if; -- if (is_odd = '1')
-			
-			--if (dvalid_pipe(delay_plen - 1) = '0') then
-			--	-- Set outputs to the default values
-			--	Y_out <= x"10";
-			--	Cb_out <= x"80";
-			--	Cr_out <= x"80";
-			--	H_sync_out <= '0';
-			--	V_sync_out <= '0';
-			--	C_sync_out <= '0';
-			--	Blanking_out <= '0';
-			--	dvalid_out <= '0';
-			--end if;
-		end if;	-- if ((reset = '1') or (dvalid = '0'))
-	end process; -- feed_sample_pipes : process(pclk)
+		end if;	-- if (reset = '1')
+	end process; -- duplicate_chroma_samples : process(pclk)
 end behav;
