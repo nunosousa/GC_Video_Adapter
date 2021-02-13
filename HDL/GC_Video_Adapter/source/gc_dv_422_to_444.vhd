@@ -17,14 +17,14 @@ entity gc_dv_422_to_444 is
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
 		reset		: in	std_logic;
-		Y_out		: out	std_logic_vector(7 downto 0);
-		Cb_out		: out	std_logic_vector(7 downto 0);
-		Cr_out		: out	std_logic_vector(7 downto 0);
-		H_sync_out	: out	std_logic;
-		V_sync_out	: out	std_logic;
-		C_sync_out	: out	std_logic;
-		Blanking_out: out	std_logic;
-		dvalid_out	: out	std_logic
+		Y_out		: out	std_logic_vector(7 downto 0) := x"10";
+		Cb_out		: out	std_logic_vector(7 downto 0) := x"80";
+		Cr_out		: out	std_logic_vector(7 downto 0) := x"80";
+		H_sync_out	: out	std_logic := '0';
+		V_sync_out	: out	std_logic := '0';
+		C_sync_out	: out	std_logic := '0';
+		Blanking_out: out	std_logic := '0';
+		dvalid_out	: out	std_logic := '0'
 	);
 end entity;
 
