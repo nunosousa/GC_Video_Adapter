@@ -68,6 +68,22 @@ begin
 			Cr_loaded <= '0';
 			
 		elsif (rising_edge(pclk)) then
+			-- Delay Y sample values and flags
+			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
+			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
+			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
+			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
+			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
+			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
+
+			-- Copy delayed samples to output
+			Y_out <= Y_pipe(delay_plen - 1);
+			H_sync_out <= H_sync_pipe(delay_plen - 1);
+			V_sync_out <= V_sync_pipe(delay_plen - 1);
+			C_sync_out <= C_sync_pipe(delay_plen - 1);
+			Blanking_out <= Blanking_pipe(delay_plen - 1);
+			dvalid_out <= dvalid_pipe(delay_plen - 1);
+			
 			-- When both Cr and Cb samples are stored, shift them to output.
 			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
 				Cr_out <= Cr_sample;
@@ -85,13 +101,13 @@ begin
 				Cb_loaded <= '1';
 			end if; -- if (is_Cr = '1')
 			
-			-- If blanking video, load both chroma samples with the same blanking value
-			if (Blanking = '1') then
-				Cr_sample <= CbCr;
-				Cb_sample <= CbCr;
-				Cr_loaded <= '1';
-				Cb_loaded <= '1';
-			end if; -- if (Blanking = '1')
+			---- If blanking video, load both chroma samples with the same blanking value
+			--if (Blanking_pipe(delay_plen - 1) = '1') then
+			--	Cr_sample <= CbCr;
+			--	Cb_sample <= CbCr;
+			--	Cr_loaded <= '1';
+			--	Cb_loaded <= '1';
+			--end if; -- if (Blanking = '1')
 			
 			---- Detect wrong chroma sample order.
 			--if (is_odd = '1') then	-- If frame is odd, then first chroma sample is Cr
@@ -105,22 +121,6 @@ begin
 			--		Cr_loaded := '0';
 			--	end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '0'))
 			--end if; -- if (is_odd = '1')
-			
-			-- Delay Y sample values and flags
-			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
-			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
-			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
-			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
-			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
-			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
-
-			-- Copy delayed samples to output
-			Y_out <= Y_pipe(delay_plen - 1);
-			H_sync_out <= H_sync_pipe(delay_plen - 1);
-			V_sync_out <= V_sync_pipe(delay_plen - 1);
-			C_sync_out <= C_sync_pipe(delay_plen - 1);
-			Blanking_out <= Blanking_pipe(delay_plen - 1);
-			dvalid_out <= dvalid_pipe(delay_plen - 1);
 			
 			--if (dvalid_pipe(delay_plen - 1) = '0') then
 			--	-- Set outputs to the default values
