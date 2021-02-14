@@ -51,23 +51,7 @@ architecture behav of gc_dv_422_to_444 is
 begin
 	duplicate_chroma_samples : process(pclk)
 	begin
-		if (reset = '1') then
-			-- Reset pipes and flags
-			Y_pipe <= (others => x"10");
-			Cb_sample <= x"80";
-			Cr_sample <= x"80";
-			Y_out <= x"10";
-			Cb_out <= x"80";
-			Cr_out <= x"80";
-			H_sync_out <= '0';
-			V_sync_out <= '0';
-			C_sync_out <= '0';
-			Blanking_out <= '0';
-			dvalid_out <= '0';
-			Cb_loaded <= '0';
-			Cr_loaded <= '0';
-			
-		elsif (rising_edge(pclk)) then
+		if (rising_edge(pclk)) then
 			-- Delay Y sample values and flags
 			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
 			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
@@ -100,6 +84,6 @@ begin
 				Cb_sample <= CbCr;
 				Cb_loaded <= '1';
 			end if; -- if (is_Cr = '1')
-		end if;	-- if (reset = '1')
+		end if;	-- if (rising_edge(pclk))
 	end process; -- duplicate_chroma_samples : process(pclk)
 end behav;

@@ -45,19 +45,7 @@ begin
 		variable clk_sel		: std_logic := '0';
 
 	begin
-		if (reset = '1') then	-- Reset sample counter
-			clk_divider <= (others => '1');
-			vsample_count <= 0;
-			dvalid <= '0';
-			Y <= x"10";
-			CbCr <= x"80";
-			is_Cr <= '0';
-			is_odd <= '0';
-			H_sync <= '0';
-			V_sync <= '0';
-			C_sync <= '0';
-			Blanking <= '0';
-		elsif (rising_edge(vclk)) then
+		if (rising_edge(vclk)) then
 			-- Store new vdata sample and shift samples
 			vdata_buffer(0) <= vdata_buffer(1);
 			vdata_buffer(1) <= vdata_buffer(2);
@@ -148,7 +136,7 @@ begin
 				-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 				pclk <= clk_divider(1);
 			end if;
-		end if;	-- if (reset = '1')
+		end if;	-- if (rising_edge(vclk))
 	end process;
 	
 end behav;

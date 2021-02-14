@@ -14,7 +14,6 @@ architecture behav of gc_dv_decode_tb is
 			vclk	: in	std_logic;
 			vphase	: in	std_logic;
 			vdata	: in	std_logic_vector(7 downto 0);
-			reset	: in	std_logic;
 			pclk	: out	std_logic;
 			Y		: out	std_logic_vector(7 downto 0);
 			CbCr	: out	std_logic_vector(7 downto 0);
@@ -31,7 +30,6 @@ architecture behav of gc_dv_decode_tb is
 	signal vclk_tb		: std_logic;
 	signal vphase_tb	: std_logic;
 	signal vdata_tb		: std_logic_vector(7 downto 0);
-	signal reset_tb		: std_logic;
 	signal pclk_tb		: std_logic;
 	signal Y_tb			: std_logic_vector(7 downto 0);
 	signal CbCr_tb		: std_logic_vector(7 downto 0);
@@ -47,7 +45,6 @@ architecture behav of gc_dv_decode_tb is
 			vclk_tb		: std_logic;
 			vphase_tb	: std_logic;
 			vdata_tb	: std_logic_vector(7 downto 0);
-			reset_tb	: std_logic;
 			pclk_tb		: std_logic;
 			Y_tb		: std_logic_vector(7 downto 0);
 			CbCr_tb		: std_logic_vector(7 downto 0);
@@ -61,83 +58,81 @@ architecture behav of gc_dv_decode_tb is
 
 	type test_vector_array is array (natural range <>) of test_vector;
 	constant test_vectors : test_vector_array := (
-		-- vclk, vphase, vdata, reset
-		  ('1',  '0',    x"00", '1'),	-- reset
+		-- vclk, vphase, vdata
+		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flags low
+		  ('1',  '0',    x"00"),
+		  ('0',  '0',    x"00"),
+		  ('1',  '0',    x"00"),
 		  
-		  ('0',  '0',    x"00", '0'),	-- fast data, blanking data, raw flags low
-		  ('1',  '0',    x"00", '0'),
-		  ('0',  '0',    x"00", '0'),
-		  ('1',  '0',    x"00", '0'),
+		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 4 high
+		  ('1',  '1',    x"00"),
+		  ('0',  '1',    x"10"),
+		  ('1',  '1',    x"10"),
 		  
-		  ('0',  '1',    x"00", '0'),	-- fast data, blanking data, raw flag bit 4 high
-		  ('1',  '1',    x"00", '0'),
-		  ('0',  '1',    x"10", '0'),
-		  ('1',  '1',    x"10", '0'),
+		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flag bit 5 high
+		  ('1',  '0',    x"00"),
+		  ('0',  '0',    x"20"),
+		  ('1',  '0',    x"20"),
 		  
-		  ('0',  '0',    x"00", '0'),	-- fast data, blanking data, raw flag bit 5 high
-		  ('1',  '0',    x"00", '0'),
-		  ('0',  '0',    x"20", '0'),
-		  ('1',  '0',    x"20", '0'),
+		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 7 high
+		  ('1',  '1',    x"00"),
+		  ('0',  '1',    x"80"),
+		  ('1',  '1',    x"80"),
 		  
-		  ('0',  '1',    x"00", '0'),	-- fast data, blanking data, raw flag bit 7 high
-		  ('1',  '1',    x"00", '0'),
-		  ('0',  '1',    x"80", '0'),
-		  ('1',  '1',    x"80", '0'),
+		  ('0',  '0',    x"00"),	-- fast data, color data
+		  ('1',  '0',    x"00"),
+		  ('0',  '0',    x"00"),
+		  ('1',  '0',    x"00"),
 		  
-		  ('0',  '0',    x"00", '0'),	-- fast data, color data
-		  ('1',  '0',    x"00", '0'),
-		  ('0',  '0',    x"00", '0'),
-		  ('1',  '0',    x"00", '0'),
+		  ('0',  '1',    x"15"),
+		  ('1',  '1',    x"15"),
+		  ('0',  '1',    x"70"),
+		  ('1',  '1',    x"70"),
 		  
-		  ('0',  '1',    x"15", '0'),
-		  ('1',  '1',    x"15", '0'),
-		  ('0',  '1',    x"70", '0'),
-		  ('1',  '1',    x"70", '0'),
+		  ('0',  '0',    x"16"),
+		  ('1',  '0',    x"16"),
+		  ('0',  '0',    x"69"),
+		  ('1',  '0',    x"69"),
 		  
-		  ('0',  '0',    x"16", '0'),
-		  ('1',  '0',    x"16", '0'),
-		  ('0',  '0',    x"69", '0'),
-		  ('1',  '0',    x"69", '0'),
+		  ('0',  '1',    x"17"),
+		  ('1',  '1',    x"17"),
+		  ('0',  '1',    x"68"),
+		  ('1',  '1',    x"68"),
 		  
-		  ('0',  '1',    x"17", '0'),
-		  ('1',  '1',    x"17", '0'),
-		  ('0',  '1',    x"68", '0'),
-		  ('1',  '1',    x"68", '0'),
+		  ('0',  '0',    x"18"),
+		  ('1',  '0',    x"18"),
+		  ('0',  '0',    x"67"),
+		  ('1',  '0',    x"67"),
 		  
-		  ('0',  '0',    x"18", '0'),
-		  ('1',  '0',    x"18", '0'),
-		  ('0',  '0',    x"67", '0'),
-		  ('1',  '0',    x"67", '0'),
+		  ('0',  '1',    x"19"),
+		  ('1',  '1',    x"19"),
+		  ('0',  '1',    x"66"),
+		  ('1',  '1',    x"66"),
 		  
-		  ('0',  '1',    x"19", '0'),
-		  ('1',  '1',    x"19", '0'),
-		  ('0',  '1',    x"66", '0'),
-		  ('1',  '1',    x"66", '0'),
+		  ('0',  '1',    x"19"),
+		  ('1',  '1',    x"19"),
+		  ('0',  '1',    x"66"),
+		  ('1',  '1',    x"66"),
 		  
-		  ('0',  '1',    x"19", '0'),
-		  ('1',  '1',    x"19", '0'),
-		  ('0',  '1',    x"66", '0'),
-		  ('1',  '1',    x"66", '0'),
+		  ('0',  '1',    x"19"),
+		  ('1',  '1',    x"19"),
+		  ('0',  '1',    x"66"),
+		  ('1',  '1',    x"66"),
 		  
-		  ('0',  '1',    x"19", '0'),
-		  ('1',  '1',    x"19", '0'),
-		  ('0',  '1',    x"66", '0'),
-		  ('1',  '1',    x"66", '0'),
+		  ('0',  '1',    x"19"),
+		  ('1',  '1',    x"19"),
+		  ('0',  '1',    x"66"),
+		  ('1',  '1',    x"66"),
 		  
-		  ('0',  '1',    x"19", '0'),
-		  ('1',  '1',    x"19", '0'),
-		  ('0',  '1',    x"66", '0'),
-		  ('1',  '1',    x"66", '0'),
+		  ('0',  '0',    x"20"),
+		  ('1',  '0',    x"20"),
+		  ('0',  '0',    x"66"),
+		  ('1',  '0',    x"66"),
 		  
-		  ('0',  '0',    x"20", '0'),
-		  ('1',  '0',    x"20", '0'),
-		  ('0',  '0',    x"66", '0'),
-		  ('1',  '0',    x"66", '0'),
-		  
-		  ('0',  '1',    x"21", '0'),
-		  ('1',  '1',    x"21", '0'),
-		  ('0',  '1',    x"67", '0'),
-		  ('1',  '1',    x"67", '0')
+		  ('0',  '1',    x"21"),
+		  ('1',  '1',    x"21"),
+		  ('0',  '1',    x"67"),
+		  ('1',  '1',    x"67")
 		);
 begin
 	
@@ -145,7 +140,6 @@ begin
 		vclk		=> vclk_tb,
 		vphase		=> vphase_tb,
 		vdata		=> vdata_tb,
-		reset		=> reset_tb,
 		pclk		=> pclk_tb,
 		Y			=> Y_tb,
 		CbCr		=> CbCr_tb,
@@ -165,7 +159,6 @@ begin
 			vclk_tb <= test_vectors(i).vclk_tb;
 			vphase_tb <= test_vectors(i).vphase_tb;
 			vdata_tb <= test_vectors(i).vdata_tb;
-			reset_tb <= test_vectors(i).reset_tb;
 
 			wait for period;
 		end loop;
