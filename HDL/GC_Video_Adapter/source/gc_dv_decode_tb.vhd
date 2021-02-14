@@ -45,15 +45,6 @@ architecture behav of gc_dv_decode_tb is
 			vclk_tb		: std_logic;
 			vphase_tb	: std_logic;
 			vdata_tb	: std_logic_vector(7 downto 0);
-			pclk_tb		: std_logic;
-			Y_tb		: std_logic_vector(7 downto 0);
-			CbCr_tb		: std_logic_vector(7 downto 0);
-			is_Cr_tb	: std_logic;
-			H_sync_tb	: std_logic;
-			V_sync_tb	: std_logic;
-			C_sync_tb	: std_logic;
-			Blanking_tb	: std_logic;
-			dvalid_tb	: std_logic;
 	end record;
 
 	type test_vector_array is array (natural range <>) of test_vector;
