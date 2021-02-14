@@ -25,10 +25,10 @@ end entity;
 architecture behav of gc_dv_decode is
 	-- vdata buffer
 	type vdata_buffer_type is array(0 to 3) of std_logic_vector(7 downto 0);
-	signal vdata_buffer			: vdata_buffer_type;
+	signal vdata_buffer			: vdata_buffer_type := (others => x"FF");
 	
 	-- vphase state signals
-	signal vphase_store			: std_logic;
+	signal vphase_store			: std_logic := '0';
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
