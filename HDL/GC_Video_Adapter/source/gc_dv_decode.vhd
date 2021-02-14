@@ -32,7 +32,7 @@ architecture behav of gc_dv_decode is
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
-	signal clk_divider			: unsigned(1 downto 0) := (others => '1');
+	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
 
 begin
 	-- vdata logic
@@ -50,7 +50,6 @@ begin
 			if (vsample_count < 5) then
 				vsample_count <= vsample_count + 1;
 			else
-				clk_divider <= (others => '1');
 				vsample_count <= 0;
 				dvalid <= '0';
 				Y <= x"10";
@@ -133,5 +132,4 @@ begin
 			end if;
 		end if;	-- if (rising_edge(vclk))
 	end process;
-	
 end behav;
