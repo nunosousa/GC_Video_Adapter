@@ -9,18 +9,17 @@ entity gc_dv_decode is
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
-		pclk	: out	std_logic;
-		Y		: out	std_logic_vector(7 downto 0);
-		CbCr	: out	std_logic_vector(7 downto 0);
-		is_Cr	: out	std_logic;
-		is_odd	: out	std_logic;
-		H_sync	: out	std_logic;
-		V_sync	: out	std_logic;
-		C_sync	: out	std_logic;
-		Blanking: out	std_logic;
-		dvalid	: out	std_logic
+		pclk	: out	std_logic := '0';
+		Y		: out	std_logic_vector(7 downto 0) := x"10";
+		CbCr	: out	std_logic_vector(7 downto 0) := x"80";
+		is_Cr	: out	std_logic := '0';
+		is_odd	: out	std_logic := '0';
+		H_sync	: out	std_logic := '0';
+		V_sync	: out	std_logic := '0';
+		C_sync	: out	std_logic := '0';
+		Blanking: out	std_logic := '0';
+		dvalid	: out	std_logic := '0'
 	);
-	
 end entity;
 
 architecture behav of gc_dv_decode is
@@ -46,10 +45,7 @@ begin
 	begin
 		if (rising_edge(vclk)) then
 			-- Store new vdata sample and shift samples
-			vdata_buffer(0) <= vdata_buffer(1);
-			vdata_buffer(1) <= vdata_buffer(2);
-			vdata_buffer(2) <= vdata_buffer(3);
-			vdata_buffer(3) <= vdata;
+			vdata_buffer <= vdata & vdata_buffer(0 to 2);
 			
 			if (vsample_count < 5) then
 				vsample_count <= vsample_count + 1;
@@ -78,13 +74,13 @@ begin
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 					valid_sample := '1';
-					Y_sample := vdata_buffer(2);
-					CbCr_sample := vdata_buffer(3);
+					Y_sample := vdata_buffer(1);
+					CbCr_sample := vdata_buffer(0);
 					clk_sel := '0';				-- Set pixel clock to div2 base 54 MHz clock
 				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 					valid_sample := '1';
-					Y_sample := vdata_buffer(0);
-					CbCr_sample := vdata_buffer(2);
+					Y_sample := vdata_buffer(3);
+					CbCr_sample := vdata_buffer(1);
 					clk_sel := '1';				-- Set pixel clock to div4 base 54 MHz clock
 				end if;	-- if (vsample_count = 2)
 				
