@@ -59,6 +59,27 @@ architecture behav of gc_dv_top_level is
 			dvalid_out	: out	std_logic
 		);
 	end component;
+	
+	component gc_dv_YCbCr_to_RGB is
+		port(
+			Y			: in	std_logic_vector(7 downto 0);
+			Cb			: in	std_logic_vector(7 downto 0);
+			Cr			: in	std_logic_vector(7 downto 0);
+			H_sync		: in	std_logic;
+			V_sync		: in	std_logic;
+			C_sync		: in	std_logic;
+			Blanking	: in	std_logic;
+			dvalid		: in	std_logic,
+			R_out		: out	std_logic_vector(7 downto 0);
+			G_out		: out	std_logic_vector(7 downto 0);
+			B_out		: out	std_logic_vector(7 downto 0);
+			H_sync_out	: out	std_logic;
+			V_sync_out	: out	std_logic;
+			C_sync_out	: out	std_logic;
+			Blanking_out: out	std_logic;
+			dvalid_out	: out	std_logic
+		);
+	end component;
 begin
 	frame_decode: component gc_dv_decode port map (
 		vclk			=> vclk_tb,
@@ -96,4 +117,23 @@ begin
 		dvalid_out		=> dvalid_out_tb
 	);
 	
+	color_space_converter: component gc_dv_YCbCr_to_RGB  port map (
+		Y				=> ,
+		Cb				=> ,
+		Cr				=> ,
+		H_sync			=> ,
+		V_sync			=> ,
+		C_sync			=> ,
+		Blanking		=> ,
+		dvalid			=> ,
+		R_out			=> ,
+		G_out			=> ,
+		B_out			=> ,
+		H_sync_out		=> ,
+		V_sync_out		=> ,
+		C_sync_out		=> ,
+		Blanking_out	=> ,
+		dvalid_out		=> 
+	);
+
 end behav;
