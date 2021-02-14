@@ -16,7 +16,6 @@ entity gc_dv_422_to_444 is
 		C_sync		: in	std_logic;
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
-		reset		: in	std_logic;
 		Y_out		: out	std_logic_vector(7 downto 0) := x"10";
 		Cb_out		: out	std_logic_vector(7 downto 0) := x"80";
 		Cr_out		: out	std_logic_vector(7 downto 0) := x"80";
@@ -37,7 +36,7 @@ architecture behav of gc_dv_422_to_444 is
 	signal Cb_loaded		: std_logic := '0';
 	signal Cr_loaded		: std_logic := '0';
 	
-	-- Pipes for video samples and flags
+	-- Pipes for luma samples and flags
 	constant delay_plen		: natural := 2;
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");

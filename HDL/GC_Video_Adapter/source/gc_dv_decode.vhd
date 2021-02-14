@@ -9,7 +9,6 @@ entity gc_dv_decode is
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
-		reset	: in	std_logic;
 		pclk	: out	std_logic;
 		Y		: out	std_logic_vector(7 downto 0);
 		CbCr	: out	std_logic_vector(7 downto 0);

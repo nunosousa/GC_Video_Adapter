@@ -25,7 +25,6 @@ architecture behav of gc_dv_top_level is
 			vclk		: in	std_logic;
 			vphase		: in	std_logic;
 			vdata		: in	std_logic_vector(7 downto 0);
-			reset		: in	std_logic;
 			pclk		: out	std_logic;
 			Y			: out	std_logic_vector(7 downto 0);
 			CbCr		: out	std_logic_vector(7 downto 0);
@@ -50,7 +49,6 @@ architecture behav of gc_dv_top_level is
 			C_sync		: in	std_logic;
 			Blanking	: in	std_logic;
 			dvalid		: in	std_logic;
-			reset		: in	std_logic;
 			Y_out		: out	std_logic_vector(7 downto 0);
 			Cb_out		: out	std_logic_vector(7 downto 0);
 			Cr_out		: out	std_logic_vector(7 downto 0);
@@ -66,7 +64,6 @@ begin
 		vclk			=> vclk_tb,
 		vphase			=> vphase_tb,
 		vdata			=> vdata_tb,
-		reset			=> reset_tb,
 		pclk			=> pclk_tb,
 		Y				=> Y_tb,
 		CbCr			=> CbCr_tb,
@@ -89,7 +86,6 @@ begin
 		C_sync			=> C_sync_tb,
 		Blanking		=> Blanking_tb,
 		dvalid			=> dvalid_tb,
-		reset			=> reset_tb,
 		Y_out			=> Y_out_tb,
 		Cb_out			=> Cb_out_tb,
 		Cr_out			=> Cr_out_tb,
