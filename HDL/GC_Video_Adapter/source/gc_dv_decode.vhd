@@ -9,7 +9,7 @@ entity gc_dv_decode is
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
-		pclk	: out	std_logic := '0';
+		pclk	: out	std_logic := '1';
 		Y		: out	std_logic_vector(7 downto 0) := x"10";
 		CbCr	: out	std_logic_vector(7 downto 0) := x"80";
 		is_Cr	: out	std_logic := '0';
@@ -67,7 +67,7 @@ begin
 			
 			-- Process new video sample using vphase as trigger
 			if (vphase /= vphase_store) then
-				vsample_count <= 1;
+				vsample_count <= 1; -- Restart sample counter to 1 (current sample)
 				
 				clk_divider <= (others => '1');	-- Synchronize pixel clock with vphase change
 				
