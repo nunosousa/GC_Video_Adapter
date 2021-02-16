@@ -102,11 +102,6 @@ begin
 				else						-- video sample
 					Y <= Y_sample;
 					CbCr <= CbCr_sample;
-					H_sync <= '0';
-					V_sync <= '0';
-					is_odd <= '0';
-					C_sync <= '0';
-					Blanking <= '0';
 					
 					if (vphase = '1') then
 						is_Cr <= '1';
