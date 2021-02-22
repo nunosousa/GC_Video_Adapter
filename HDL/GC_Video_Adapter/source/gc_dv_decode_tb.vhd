@@ -18,6 +18,7 @@ architecture behav of gc_dv_decode_tb is
 			Y		: out	std_logic_vector(7 downto 0);
 			CbCr	: out	std_logic_vector(7 downto 0);
 			is_Cr	: out	std_logic;
+			is_odd	: out	std_logic;
 			H_sync	: out	std_logic;
 			V_sync	: out	std_logic;
 			C_sync	: out	std_logic;
@@ -34,6 +35,7 @@ architecture behav of gc_dv_decode_tb is
 	signal Y_tb			: std_logic_vector(7 downto 0);
 	signal CbCr_tb		: std_logic_vector(7 downto 0);
 	signal is_Cr_tb		: std_logic;
+	signal is_odd_tb	: std_logic;
 	signal H_sync_tb	: std_logic;
 	signal V_sync_tb	: std_logic;
 	signal C_sync_tb	: std_logic;
@@ -137,6 +139,7 @@ begin
 		Y			=> Y_tb,
 		CbCr		=> CbCr_tb,
 		is_Cr		=> is_Cr_tb,
+		is_odd		=> is_odd_tb,
 		H_sync		=> H_sync_tb,
 		V_sync		=> V_sync_tb,
 		C_sync		=> C_sync_tb,
