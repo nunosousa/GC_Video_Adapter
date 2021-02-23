@@ -45,8 +45,6 @@ begin
 	begin
 		if (rising_edge(vclk)) then
 			-- Set defaults in case no valid data is detected
-			vsample_count <= 1; -- Set sample counter to 1 (current sample)
-			dvalid <= '0';
 			Y <= x"10";
 			CbCr <= x"80";
 			is_Cr <= '0';
@@ -63,6 +61,8 @@ begin
 			-- Increment number of vdata samples taken on vclk
 			if (vsample_count < 4) then
 				vsample_count <= vsample_count + 1;
+			else
+				dvalid <= '0'; -- Value if vsample_count = 4 doesn't coincide with a vphase change.
 			end if;
 			
 			-- Update previous vphase state for comparison
@@ -70,6 +70,8 @@ begin
 			
 			-- Process new video sample using vphase as trigger
 			if (vphase /= vphase_store) then
+				vsample_count <= 1; -- Set sample counter to 1 (current sample) after vphase change
+			
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 					valid_sample := '1';
