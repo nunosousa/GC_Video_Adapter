@@ -52,32 +52,32 @@ architecture behav of gc_dv_decode_tb is
 	type test_vector_array is array (natural range <>) of test_vector;
 	constant test_vectors : test_vector_array := (
 		-- vclk, vphase, vdata
-		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flags low
+		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flags low, invalid number of samples
 		  ('1',  '0',    x"00"),
 		  ('0',  '0',    x"00"),
 		  ('1',  '0',    x"00"),
 		  ('0',  '0',    x"00"),
 		  ('1',  '0',    x"00"),
 		  
-		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 4 high
+		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 4 low (H_sync)
 		  ('1',  '1',    x"00"),
-		  ('0',  '1',    x"10"),
-		  ('1',  '1',    x"10"),
+		  ('0',  '1',    x"EF"),
+		  ('1',  '1',    x"EF"),
 		  
-		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flag bit 5 high
+		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flag bit 5 low (H_sync)
 		  ('1',  '0',    x"00"),
-		  ('0',  '0',    x"20"),
-		  ('1',  '0',    x"20"),
+		  ('0',  '0',    x"DF"),
+		  ('1',  '0',    x"DF"),
 		  
-		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 7 high
+		  ('0',  '1',    x"00"),	-- fast data, blanking data, raw flag bit 7 low (C_sync)
 		  ('1',  '1',    x"00"),
-		  ('0',  '1',    x"80"),
-		  ('1',  '1',    x"80"),
+		  ('0',  '1',    x"7F"),
+		  ('1',  '1',    x"7F"),
 		  
-		  ('0',  '0',    x"00"),	-- fast data, color data
+		  ('0',  '0',    x"00"),	-- fast data, blanking data
 		  ('1',  '0',    x"00"),
-		  ('0',  '0',    x"00"),
-		  ('1',  '0',    x"00"),
+		  ('0',  '0',    x"FF"),
+		  ('1',  '0',    x"FF"),
 		  
 		  ('0',  '1',    x"01"),
 		  ('1',  '1',    x"01"),
@@ -89,6 +89,8 @@ architecture behav of gc_dv_decode_tb is
 		  ('0',  '0',    x"02"),
 		  ('1',  '0',    x"02"),
 		  
+		  ('0',  '1',    x"04"),	-- fast data, invalid number of samples
+		  ('1',  '1',    x"04"),
 		  ('0',  '1',    x"04"),
 		  ('1',  '1',    x"04"),
 		  ('0',  '1',    x"04"),
