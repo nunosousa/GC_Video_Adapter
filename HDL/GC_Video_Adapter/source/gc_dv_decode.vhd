@@ -28,11 +28,14 @@ architecture behav of gc_dv_decode is
 	signal vdata_buffer			: vdata_buffer_type := (others => x"FF");
 	
 	-- vphase state signals
-	signal vphase_store			: std_logic := '0';
+	signal last_vphase			: std_logic := '0';
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
 	-- Clock divider
 	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
+	
+	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid date detection
+	signal last_vmode			: std_logic := '0'; -- Default is <Y0><Y0>...
 
 begin
 	-- vdata logic
@@ -44,15 +47,6 @@ begin
 
 	begin
 		if (rising_edge(vclk)) then
-			-- Set defaults in case no valid data is detected
-			Y <= x"10";
-			CbCr <= x"80";
-			is_Cr <= '0';
-			is_odd <= '0';
-			H_sync <= '0';
-			V_sync <= '0';
-			C_sync <= '0';
-			Blanking <= '0';
 			clk_divider <= clk_divider + 1;	-- Increment pixel clock divider
 			
 			-- Store new vdata sample and shift samples
@@ -61,30 +55,43 @@ begin
 			-- Increment number of vdata samples taken on vclk
 			if (vsample_count < 4) then
 				vsample_count <= vsample_count + 1;
-			else
-				dvalid <= '0'; -- Value if vsample_count = 4 doesn't coincide with a vphase change.
+			end if;
+			
+			if ((vsample_count = 4) or ((vsample_count > 2) and (last_vmode = '1'))) then
+				-- Set defaults in case vsample_count = 4 doesn't coincide with a vphase change.
+				Y <= x"10";
+				CbCr <= x"80";
+				is_Cr <= '0';
+				is_odd <= '0';
+				H_sync <= '0';
+				V_sync <= '0';
+				C_sync <= '0';
+				Blanking <= '0';
+				dvalid <= '0';
 			end if;
 			
 			-- Update previous vphase state for comparison
-			vphase_store <= vphase;
+			last_vphase <= vphase;
 			
 			-- Process new video sample using vphase as trigger
-			if (vphase /= vphase_store) then
+			if (vphase /= last_vphase) then
 				vsample_count <= 1; -- Set sample counter to 1 (current sample) after vphase change
 			
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
+					last_vmode <= '1';
 					valid_sample := '1';
 					Y_sample := vdata_buffer(1);
 					CbCr_sample := vdata_buffer(0);
 					clk_sel := '0';				-- Set pixel clock to div2 base 54 MHz clock
 				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+					last_vmode <= '0';
 					valid_sample := '1';
 					Y_sample := vdata_buffer(3);
 					CbCr_sample := vdata_buffer(1);
 					clk_sel := '1';				-- Set pixel clock to div4 base 54 MHz clock
 				end if;	-- if (vsample_count = 2)
-			end if;	-- if (vphase /= vphase_store)
+			end if;	-- if (vphase /= last_vphase)
 			
 			-- If new sample exists, set output interface video values and flags
 			if (valid_sample = '1') then
@@ -95,15 +102,20 @@ begin
 				if (Y_sample = x"00") then	-- blanking data
 					Y <= x"10";
 					CbCr <= x"80";
-					H_sync <= not CbCr_sample(4);
-					V_sync <= not CbCr_sample(5);
-					is_odd <= not CbCr_sample(6);
-					C_sync <= not CbCr_sample(7);
+					H_sync <= not CbCr_sample(4);	-- Active low.
+					V_sync <= not CbCr_sample(5);	-- Active low.
+					is_odd <= not CbCr_sample(6);	-- Active low.
+					C_sync <= not CbCr_sample(7);	-- Active low.
 					Blanking <= '1';
 					is_Cr <= '0';
 				else						-- video sample
 					Y <= Y_sample;
 					CbCr <= CbCr_sample;
+					H_sync <= '0';
+					V_sync <= '0';
+					is_odd <= '0';
+					C_sync <= '0';
+					Blanking <= '0';
 					
 					if (vphase = '1') then
 						is_Cr <= '1';
