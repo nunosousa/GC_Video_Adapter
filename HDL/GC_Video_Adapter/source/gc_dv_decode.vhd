@@ -34,8 +34,8 @@ architecture behav of gc_dv_decode is
 	-- Clock divider
 	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
 	
-	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid date detection
-	signal last_vmode			: std_logic := '0'; -- Default is <Y0><Y0>...
+	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid data detection
+	signal last_vmode			: std_logic := '0'; -- Default '0' is <Y0><Y0>...
 
 begin
 	-- vdata logic
@@ -43,7 +43,6 @@ begin
 		variable valid_sample	: std_logic := '0';
 		variable Y_sample		: std_logic_vector(7 downto 0);
 		variable CbCr_sample	: std_logic_vector(7 downto 0);
-		variable clk_sel		: std_logic := '0';
 
 	begin
 		if (rising_edge(vclk)) then
@@ -57,8 +56,8 @@ begin
 				vsample_count <= vsample_count + 1;
 			end if;
 			
-			if ((vsample_count = 4) or ((vsample_count > 2) and (last_vmode = '1'))) then
-				-- Set defaults in case vsample_count = 4 doesn't coincide with a vphase change.
+			-- Set defaults for the case that no valid samples is processed.
+			if ((vsample_count = 4) or ((vsample_count = 2) and (last_vmode = '1'))) then
 				Y <= x"10";
 				CbCr <= x"80";
 				is_Cr <= '0';
@@ -83,13 +82,11 @@ begin
 					valid_sample := '1';
 					Y_sample := vdata_buffer(1);
 					CbCr_sample := vdata_buffer(0);
-					clk_sel := '0';				-- Set pixel clock to div2 base 54 MHz clock
 				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 					last_vmode <= '0';
 					valid_sample := '1';
 					Y_sample := vdata_buffer(3);
 					CbCr_sample := vdata_buffer(1);
-					clk_sel := '1';				-- Set pixel clock to div4 base 54 MHz clock
 				end if;	-- if (vsample_count = 2)
 			end if;	-- if (vphase /= last_vphase)
 			
