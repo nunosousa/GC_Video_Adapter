@@ -9,7 +9,7 @@ entity gc_dv_decode is
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
-		pclk	: out	std_logic := '1';
+		pclk	: out	std_logic := '0';
 		Y		: out	std_logic_vector(7 downto 0) := x"10";
 		CbCr	: out	std_logic_vector(7 downto 0) := x"80";
 		is_Cr	: out	std_logic := '0';
@@ -31,9 +31,6 @@ architecture behav of gc_dv_decode is
 	signal last_vphase			: std_logic := '0';
 	signal vsample_count		: natural range 0 to 5 := 0;
 	
-	-- Clock divider
-	signal clk_divider			: unsigned(1 downto 0) := (others => '0');
-	
 	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid data detection
 	signal last_vmode			: std_logic := '0'; -- Default '0' is <Y0><Y0>...
 
@@ -46,7 +43,14 @@ begin
 
 	begin
 		if (rising_edge(vclk)) then
-			clk_divider <= clk_divider + 1;	-- Increment pixel clock divider
+			-- 
+			if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
+				pclk <= '1';
+			end if;
+			-- 
+			if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
+				pclk <= '0';
+			end if;
 			
 			-- Store new vdata sample and shift samples
 			vdata_buffer <= vdata & vdata_buffer(0 to 2);
@@ -94,7 +98,6 @@ begin
 			if (valid_sample = '1') then
 				valid_sample := '0';
 				dvalid <= '1';
-				clk_divider <= (others => '1');	-- Synchronize pixel clock with new sample change
 				
 				if (Y_sample = x"00") then	-- blanking data
 					Y <= x"10";
@@ -121,15 +124,6 @@ begin
 					end if;	-- if (vphase = '1')
 				end if;	-- if (Y_sample = x"00")
 			end if;	-- if (valid_sample = '1')
-			
-			-- Select pixel clock
-			if (clk_sel = '0') then
-				-- Pixel clock for vdata stream format: <Y0><CbCr0><Y1><CbCr1>...
-				pclk <= clk_divider(0);
-			else
-				-- Pixel clock for vdata stream format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
-				pclk <= clk_divider(1);
-			end if;
 		end if;	-- if (rising_edge(vclk))
 	end process;
 end behav;
