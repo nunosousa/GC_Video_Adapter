@@ -45,11 +45,11 @@ begin
 		if (rising_edge(vclk)) then
 			-- 
 			if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
-				pclk <= '1';
+				pclk <= '0';
 			end if;
 			-- 
 			if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
-				pclk <= '0';
+				pclk <= '1';
 			end if;
 			
 			-- Store new vdata sample and shift samples
