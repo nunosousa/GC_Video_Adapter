@@ -66,7 +66,8 @@ begin
 			end if;
 			
 			-- Set defaults for the case that no valid samples is processed.
-			if ((vsample_count = 4) or ((vsample_count = 2) and (last_vmode = '1'))) then
+			--if ((vsample_count = 4) or ((vsample_count = 2) and (last_vmode = '1'))) then
+			if (vsample_count = 4) then
 				Y <= x"10";
 				CbCr <= x"80";
 				is_Cr <= '0';
