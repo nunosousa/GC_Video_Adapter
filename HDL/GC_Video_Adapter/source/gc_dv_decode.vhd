@@ -34,6 +34,7 @@ architecture behav of gc_dv_decode is
 	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid data detection
 	signal last_vmode			: std_logic := '0'; -- Default '0' is <Y0><Y0>...
 	
+	-- Retain previous dvalid for pixel clock generation enable.
 	signal last_dvalid			: std_logic := '0';
 
 begin
@@ -45,13 +46,11 @@ begin
 
 	begin
 		if (rising_edge(vclk)) then
-			-- 
+			-- Generate output clock signal. Adjust pixel clock so that the rising edle is in the middle  of the video sample.
 			if (last_dvalid = '1') then
-				-- 
 				if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
 					pclk <= '0';
 				end if;
-				-- 
 				if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
 					pclk <= '1';
 				end if;
