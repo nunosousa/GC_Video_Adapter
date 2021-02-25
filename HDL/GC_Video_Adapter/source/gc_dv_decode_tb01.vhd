@@ -64,7 +64,7 @@ architecture behav of gc_dv_decode_tb is
 		  ('0',  '1',    x"EF"),
 		  ('1',  '1',    x"EF"),
 		  
-		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flag bit 5 low (H_sync)
+		  ('0',  '0',    x"00"),	-- fast data, blanking data, raw flag bit 5 low (V_sync)
 		  ('1',  '0',    x"00"),
 		  ('0',  '0',    x"DF"),
 		  ('1',  '0',    x"DF"),
