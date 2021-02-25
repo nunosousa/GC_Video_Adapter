@@ -33,6 +33,8 @@ architecture behav of gc_dv_decode is
 	
 	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid data detection
 	signal last_vmode			: std_logic := '0'; -- Default '0' is <Y0><Y0>...
+	
+	signal last_dvalid			: std_logic := '0';
 
 begin
 	-- vdata logic
@@ -44,12 +46,15 @@ begin
 	begin
 		if (rising_edge(vclk)) then
 			-- 
-			if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
-				pclk <= '0';
-			end if;
-			-- 
-			if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
-				pclk <= '1';
+			if (last_dvalid = '1') then
+				-- 
+				if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
+					pclk <= '0';
+				end if;
+				-- 
+				if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
+					pclk <= '1';
+				end if;
 			end if;
 			
 			-- Store new vdata sample and shift samples
@@ -71,6 +76,7 @@ begin
 				C_sync <= '0';
 				Blanking <= '0';
 				dvalid <= '0';
+				last_dvalid <= '0';
 			end if;
 			
 			-- Update previous vphase state for comparison
@@ -98,6 +104,7 @@ begin
 			if (valid_sample = '1') then
 				valid_sample := '0';
 				dvalid <= '1';
+				last_dvalid <= '1';
 				
 				if (Y_sample = x"00") then	-- blanking data
 					Y <= x"10";
@@ -117,7 +124,7 @@ begin
 					C_sync <= '0';
 					Blanking <= '0';
 					
-					if (vphase = '1') then
+					if (last_vphase = '1') then
 						is_Cr <= '1';
 					else
 						is_Cr <= '0';
