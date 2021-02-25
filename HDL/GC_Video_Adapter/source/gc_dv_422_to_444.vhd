@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 
 entity gc_dv_422_to_444 is
 	port(
+		vclk		: in	std_logic;
 		pclk		: in	std_logic;
 		Y			: in	std_logic_vector(7 downto 0);
 		CbCr		: in	std_logic_vector(7 downto 0);
@@ -47,42 +48,50 @@ architecture behav of gc_dv_422_to_444 is
 	signal Blanking_pipe	: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	
+	-- Retain previous pclk.
+	signal last_pclk			: std_logic := '0';
+	
 begin
-	duplicate_chroma_samples : process(pclk)
+	duplicate_chroma_samples : process(vclk)
 	begin
-		if (rising_edge(pclk)) then
-			-- Delay Y sample values and flags
-			Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
-			H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
-			V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
-			C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
-			Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
-			dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
-
-			-- Copy delayed samples to output
-			Y_out <= Y_pipe(delay_plen - 1);
-			H_sync_out <= H_sync_pipe(delay_plen - 1);
-			V_sync_out <= V_sync_pipe(delay_plen - 1);
-			C_sync_out <= C_sync_pipe(delay_plen - 1);
-			Blanking_out <= Blanking_pipe(delay_plen - 1);
-			dvalid_out <= dvalid_pipe(delay_plen - 1);
+		if (rising_edge(vclk)) then
+			-- Store copy of pclk
+			last_pclk <= pclk;
 			
-			-- When both Cr and Cb samples are stored, shift them to output.
-			if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
-				Cr_out <= Cr_sample;
-				Cb_out <= Cb_sample;
-				Cr_loaded <= '0';
-				Cb_loaded <= '0';
-			end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
-			
-			-- Separate Cb and Cr sample values.
-			if (is_Cr = '1') then
-				Cr_sample <= CbCr;
-				Cr_loaded <= '1';
-			else
-				Cb_sample <= CbCr;
-				Cb_loaded <= '1';
-			end if; -- if (is_Cr = '1')
-		end if;	-- if (rising_edge(pclk))
+			if (pclk /= last_pclk) then
+				-- Delay Y sample values and flags
+				Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
+				H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
+				V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
+				C_sync_pipe <= C_sync & C_sync_pipe(0 to delay_plen - 2);
+				Blanking_pipe <= Blanking & Blanking_pipe(0 to delay_plen - 2);
+				dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
+	
+				-- Copy delayed samples to output
+				Y_out <= Y_pipe(delay_plen - 1);
+				H_sync_out <= H_sync_pipe(delay_plen - 1);
+				V_sync_out <= V_sync_pipe(delay_plen - 1);
+				C_sync_out <= C_sync_pipe(delay_plen - 1);
+				Blanking_out <= Blanking_pipe(delay_plen - 1);
+				dvalid_out <= dvalid_pipe(delay_plen - 1);
+				
+				-- When both Cr and Cb samples are stored, shift them to output.
+				if ((Cr_loaded = '1') and (Cb_loaded = '1')) then
+					Cr_out <= Cr_sample;
+					Cb_out <= Cb_sample;
+					Cr_loaded <= '0';
+					Cb_loaded <= '0';
+				end if; -- if ((Cr_loaded = '1') and (Cb_loaded = '1'))
+				
+				-- Separate Cb and Cr sample values.
+				if (is_Cr = '1') then
+					Cr_sample <= CbCr;
+					Cr_loaded <= '1';
+				else
+					Cb_sample <= CbCr;
+					Cb_loaded <= '1';
+				end if; -- if (is_Cr = '1')
+			end if; -- if (pclk /= last_pclk)
+		end if;	-- if (rising_edge(vclk))
 	end process; -- duplicate_chroma_samples : process(pclk)
 end behav;
