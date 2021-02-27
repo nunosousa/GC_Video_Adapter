@@ -17,6 +17,7 @@ entity gc_dv_422_to_444 is
 		C_sync		: in	std_logic;
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
+		pclk_out	: out	std_logic := '0';
 		Y_out		: out	std_logic_vector(7 downto 0) := x"10";
 		Cb_out		: out	std_logic_vector(7 downto 0) := x"80";
 		Cr_out		: out	std_logic_vector(7 downto 0) := x"80";
@@ -42,6 +43,7 @@ architecture behav of gc_dv_422_to_444 is
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
+	signal pclk_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal V_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
@@ -60,6 +62,7 @@ begin
 			
 			if (pclk /= last_pclk) then
 				-- Delay Y sample values and flags
+				pclk_pipe <= pclk & pclk_pipe(0 to delay_plen - 2);
 				Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
 				H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
 				V_sync_pipe <= V_sync & V_sync_pipe(0 to delay_plen - 2);
@@ -68,6 +71,7 @@ begin
 				dvalid_pipe <= dvalid & dvalid_pipe(0 to delay_plen - 2);
 	
 				-- Copy delayed samples to output
+				pclk_out <= pclk_pipe(delay_plen - 1);
 				Y_out <= Y_pipe(delay_plen - 1);
 				H_sync_out <= H_sync_pipe(delay_plen - 1);
 				V_sync_out <= V_sync_pipe(delay_plen - 1);
