@@ -14,3 +14,6 @@ https://www.allaboutcircuits.com/technical-articles/basic-binary-division-the-al
 https://insights.sigasi.com/opinion/jan/vhdls-crown-jewel/
 https://vhdlwhiz.com/delta-cycles-explained/
 https://vhdlguide.readthedocs.io/en/latest/vhdl/testbench.html
+
+ghdl -a gc_dv_decode.vhd; ghdl -a gc_dv_decode_tb01.vhd; ghdl -e gc_dv_decode_tb; ghdl -r gc_dv_decode_tb --wave=gc_dv_decode_tb01.ghw
+ghdl -a gc_dv_decode.vhd; ghdl -a gc_dv_decode_tb03.vhd; ghdl -e gc_dv_decode_tb; ghdl -r gc_dv_decode_tb --vcd=gc_dv_decode_tb03.vcd
