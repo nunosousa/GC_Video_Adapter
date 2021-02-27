@@ -60,7 +60,7 @@ begin
 			-- Store copy of pclk
 			last_pclk <= pclk;
 			
-			if (pclk /= last_pclk) then
+			if ((not last_pclk) and pclk) then
 				-- Delay Y sample values and flags
 				pclk_pipe <= pclk & pclk_pipe(0 to delay_plen - 2);
 				Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
