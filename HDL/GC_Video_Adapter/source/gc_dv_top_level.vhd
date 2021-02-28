@@ -9,9 +9,10 @@ entity gc_dv_top_level is
 		vclk			: in	std_logic;
 		vphase			: in	std_logic;
 		vdata			: in	std_logic_vector(7 downto 0);
-		Y_DAC			: out	std_logic_vector(7 downto 0) := x"10";
-		Cb_DAC			: out	std_logic_vector(7 downto 0) := x"80";
-		Cr_DAC			: out	std_logic_vector(7 downto 0) := x"80";
+		RGB_out_en		: in	std_logic;
+		G_Y_DAC			: out	std_logic_vector(7 downto 0) := x"10";
+		B_Cb_DAC		: out	std_logic_vector(7 downto 0) := x"80";
+		R_Cr_DAC		: out	std_logic_vector(7 downto 0) := x"80";
 		clk_DAC			: out	std_logic := '0';
 		nC_sync_DAC		: out	std_logic := '0';
 		nBlanking_DAC	: out	std_logic := '0'
@@ -29,6 +30,7 @@ architecture behav of gc_dv_top_level is
 			Y			: out	std_logic_vector(7 downto 0);
 			CbCr		: out	std_logic_vector(7 downto 0);
 			is_Cr		: out	std_logic;
+			is_odd		: out	std_logic;
 			H_sync		: out	std_logic;
 			V_sync		: out	std_logic;
 			C_sync		: out	std_logic;
@@ -50,6 +52,7 @@ architecture behav of gc_dv_top_level is
 			C_sync		: in	std_logic;
 			Blanking	: in	std_logic;
 			dvalid		: in	std_logic;
+			pclk_out	: out	std_logic;
 			Y_out		: out	std_logic_vector(7 downto 0);
 			Cb_out		: out	std_logic_vector(7 downto 0);
 			Cr_out		: out	std_logic_vector(7 downto 0);
@@ -61,7 +64,7 @@ architecture behav of gc_dv_top_level is
 		);
 	end component;
 	
-	component gc_dv_video_DAC is
+	component gc_dv_YCbCr_to_RGB is
 		port(
 			vclk		: in	std_logic;
 			pclk		: in	std_logic;
@@ -72,10 +75,35 @@ architecture behav of gc_dv_top_level is
 			V_sync		: in	std_logic;
 			C_sync		: in	std_logic;
 			Blanking	: in	std_logic;
-			dvalid		: in	std_logic,
-			Y_DAC			: out	std_logic_vector(7 downto 0);
-			Cb_DAC			: out	std_logic_vector(7 downto 0);
-			Cr_DAC			: out	std_logic_vector(7 downto 0);
+			dvalid		: in	std_logic;
+			RGB_out		: in	std_logic;
+			pclk_out	: out	std_logic;
+			G_Y_out		: out	std_logic_vector(7 downto 0);
+			B_Cb_out	: out	std_logic_vector(7 downto 0);
+			R_Cr_out	: out	std_logic_vector(7 downto 0);
+			H_sync_out	: out	std_logic;
+			V_sync_out	: out	std_logic;
+			C_sync_out	: out	std_logic;
+			Blanking_out: out	std_logic;
+			dvalid_out	: out	std_logic
+		);
+	end component;
+
+	component gc_dv_video_DAC is
+		port(
+			vclk			: in	std_logic;
+			pclk			: in	std_logic;
+			G_Y				: in	std_logic_vector(7 downto 0);
+			B_Cb			: in	std_logic_vector(7 downto 0);
+			R_Cr			: in	std_logic_vector(7 downto 0);
+			H_sync			: in	std_logic;
+			V_sync			: in	std_logic;
+			C_sync			: in	std_logic;
+			Blanking		: in	std_logic;
+			dvalid			: in	std_logic;
+			G_Y_DAC			: out	std_logic_vector(7 downto 0);
+			B_Cb_DAC		: out	std_logic_vector(7 downto 0);
+			R_Cr_DAC		: out	std_logic_vector(7 downto 0);
 			clk_DAC			: out	std_logic;
 			nC_sync_DAC		: out	std_logic;
 			nBlanking_DAC	: out	std_logic
@@ -83,42 +111,47 @@ architecture behav of gc_dv_top_level is
 	end component;
 begin
 	frame_decode: component gc_dv_decode port map (
-		vclk			=> vclk_tb,
-		vphase			=> vphase_tb,
-		vdata			=> vdata_tb,
-		pclk			=> pclk_tb,
-		Y				=> Y_tb,
-		CbCr			=> CbCr_tb,
-		is_Cr			=> is_Cr_tb,
-		H_sync			=> H_sync_tb,
-		V_sync			=> V_sync_tb,
-		C_sync			=> C_sync_tb,
-		Blanking		=> Blanking_tb,
-		dvalid			=> dvalid_tb
+		vclk			=> vclk,
+		vphase			=> vphase,
+		vdata			=> vdata,
+		pclk			=> ,
+		Y				=> ,
+		CbCr			=> ,
+		is_Cr			=> ,
+		is_odd			=> ,
+		H_sync			=> ,
+		V_sync			=> ,
+		C_sync			=> ,
+		Blanking		=> ,
+		dvalid			=> 
 	);
 	
 	chroma_upsampling: component gc_dv_422_to_444 port map (
-		pclk			=> pclk_tb,
-		Y				=> Y_tb,
-		CbCr			=> CbCr_tb,
-		is_Cr			=> is_Cr_tb,
-		is_odd			=> is_odd_tb,
-		H_sync			=> H_sync_tb,
-		V_sync			=> V_sync_tb,
-		C_sync			=> C_sync_tb,
-		Blanking		=> Blanking_tb,
-		dvalid			=> dvalid_tb,
-		Y_out			=> Y_out_tb,
-		Cb_out			=> Cb_out_tb,
-		Cr_out			=> Cr_out_tb,
-		H_sync_out		=> H_sync_out_tb,
-		V_sync_out		=> V_sync_out_tb,
-		C_sync_out		=> C_sync_out_tb,
-		Blanking_out	=> Blanking_out_tb,
-		dvalid_out		=> dvalid_out_tb
+		vclk			=> vclk,
+		pclk			=> ,
+		Y				=> ,
+		CbCr			=> ,
+		is_Cr			=> ,
+		is_odd			=> ,
+		H_sync			=> ,
+		V_sync			=> ,
+		C_sync			=> ,
+		Blanking		=> ,
+		dvalid			=> ,
+		pclk_out		=> ,
+		Y_out			=> ,
+		Cb_out			=> ,
+		Cr_out			=> ,
+		H_sync_out		=> ,
+		V_sync_out		=> ,
+		C_sync_out		=> ,
+		Blanking_out	=> ,
+		dvalid_out		=> 
 	);
 	
-	color_space_converter: component gc_dv_YCbCr_to_RGB  port map (
+	color_space_converter: component gc_dv_YCbCr_to_RGB port map (
+		vclk			=> vclk,
+		pclk			=> ,
 		Y				=> ,
 		Cb				=> ,
 		Cr				=> ,
@@ -127,14 +160,35 @@ begin
 		C_sync			=> ,
 		Blanking		=> ,
 		dvalid			=> ,
-		R_out			=> ,
-		G_out			=> ,
-		B_out			=> ,
+		RGB_out_en		=> RGB_out_en,
+		pclk_out		=> ,
+		G_Y_out			=> ,
+		B_Cb_out		=> ,
+		R_Cr_out		=> ,
 		H_sync_out		=> ,
 		V_sync_out		=> ,
 		C_sync_out		=> ,
 		Blanking_out	=> ,
 		dvalid_out		=> 
+	);
+	
+	output_video_samples_to_DAC: component gc_dv_video_DAC port map (
+		vclk			=> vclk,
+		pclk			=> ,
+		G_Y				=> ,
+		B_Cb			=> ,
+		R_Cr			=> ,
+		H_sync			=> ,
+		V_sync			=> ,
+		C_sync			=> ,
+		Blanking		=> ,
+		dvalid			=> ,
+		G_Y_DAC			=> G_Y_DAC,
+		B_Cb_DAC		=> B_Cb_DAC,
+		R_Cr_DAC		=> R_Cr_DAC,
+		clk_DAC			=> clk_DAC,
+		nC_sync_DAC		=> nC_sync_DAC,
+		nBlanking_DAC	=> nBlanking_DAC
 	);
 
 end behav;
