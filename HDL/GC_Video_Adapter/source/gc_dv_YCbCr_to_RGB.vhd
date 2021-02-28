@@ -17,15 +17,15 @@ entity gc_dv_YCbCr_to_RGB is
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
 		RGB_out_en	: in	std_logic;
-		pclk_out	: out	std_logic;
-		G_Y_out		: out	std_logic_vector(7 downto 0);
-		B_Cb_out	: out	std_logic_vector(7 downto 0);
-		R_Cr_out	: out	std_logic_vector(7 downto 0);
-		H_sync_out	: out	std_logic;
-		V_sync_out	: out	std_logic;
-		C_sync_out	: out	std_logic;
-		Blanking_out: out	std_logic;
-		dvalid_out	: out	std_logic
+		pclk_out	: out	std_logic := '0';
+		G_Y_out		: out	std_logic_vector(7 downto 0) := x"00";
+		B_Cb_out	: out	std_logic_vector(7 downto 0) := x"00";
+		R_Cr_out	: out	std_logic_vector(7 downto 0) := x"00";
+		H_sync_out	: out	std_logic := '0';
+		V_sync_out	: out	std_logic := '0';
+		C_sync_out	: out	std_logic := '0';
+		Blanking_out: out	std_logic := '0';
+		dvalid_out	: out	std_logic := '0'
 	);
 end entity;
 
