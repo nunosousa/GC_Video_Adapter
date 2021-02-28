@@ -39,6 +39,7 @@ architecture behav of gc_dv_top_level is
 
 	component gc_dv_422_to_444 is
 		port(
+			vclk		: in	std_logic;
 			pclk		: in	std_logic;
 			Y			: in	std_logic_vector(7 downto 0);
 			CbCr		: in	std_logic_vector(7 downto 0);
@@ -60,8 +61,10 @@ architecture behav of gc_dv_top_level is
 		);
 	end component;
 	
-	component gc_dv_YCbCr_to_RGB is
+	component gc_dv_video_DAC is
 		port(
+			vclk		: in	std_logic;
+			pclk		: in	std_logic;
 			Y			: in	std_logic_vector(7 downto 0);
 			Cb			: in	std_logic_vector(7 downto 0);
 			Cr			: in	std_logic_vector(7 downto 0);
@@ -70,14 +73,12 @@ architecture behav of gc_dv_top_level is
 			C_sync		: in	std_logic;
 			Blanking	: in	std_logic;
 			dvalid		: in	std_logic,
-			R_out		: out	std_logic_vector(7 downto 0);
-			G_out		: out	std_logic_vector(7 downto 0);
-			B_out		: out	std_logic_vector(7 downto 0);
-			H_sync_out	: out	std_logic;
-			V_sync_out	: out	std_logic;
-			C_sync_out	: out	std_logic;
-			Blanking_out: out	std_logic;
-			dvalid_out	: out	std_logic
+			Y_DAC			: out	std_logic_vector(7 downto 0);
+			Cb_DAC			: out	std_logic_vector(7 downto 0);
+			Cr_DAC			: out	std_logic_vector(7 downto 0);
+			clk_DAC			: out	std_logic;
+			nC_sync_DAC		: out	std_logic;
+			nBlanking_DAC	: out	std_logic
 		);
 	end component;
 begin
