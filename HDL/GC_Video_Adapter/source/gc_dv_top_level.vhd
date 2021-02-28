@@ -21,6 +21,35 @@ entity gc_dv_top_level is
 end entity;
 
 architecture behav of gc_dv_top_level is
+	signal pclk_decode		: std_logic;
+	signal Y_decode			: std_logic_vector(7 downto 0);
+	signal CbCr_decode		: std_logic_vector(7 downto 0);
+	signal is_Cr_decode		: std_logic;
+	signal is_odd_decode	: std_logic;
+	signal H_sync_decode	: std_logic;
+	signal V_sync_decode	: std_logic;
+	signal C_sync_decode	: std_logic;
+	signal Blanking_decode	: std_logic;
+	signal dvalid_decode	: std_logic;
+	signal pclk_444			: std_logic;
+	signal Y_444			: std_logic_vector(7 downto 0);
+	signal Cb_444			: std_logic_vector(7 downto 0);
+	signal Cr_444			: std_logic_vector(7 downto 0);
+	signal H_sync_444		: std_logic;
+	signal V_sync_444		: std_logic;
+	signal C_sync_444		: std_logic;
+	signal Blanking_444		: std_logic;
+	signal dvalid_444		: std_logic;
+	signal pclk_CConv		: std_logic;
+	signal G_Y_CConv		: std_logic_vector(7 downto 0);
+	signal B_Cb_CConv		: std_logic_vector(7 downto 0);
+	signal R_Cr_CConv		: std_logic_vector(7 downto 0);
+	signal H_sync_CConv		: std_logic;
+	signal V_sync_CConv		: std_logic;
+	signal C_sync_CConv		: std_logic;
+	signal Blanking_CConv	: std_logic;
+	signal dvalid_CConv		: std_logic;
+
 	component gc_dv_decode is
 		port(
 			vclk		: in	std_logic;
@@ -114,75 +143,75 @@ begin
 		vclk			=> vclk,
 		vphase			=> vphase,
 		vdata			=> vdata,
-		pclk			=> ,
-		Y				=> ,
-		CbCr			=> ,
-		is_Cr			=> ,
-		is_odd			=> ,
-		H_sync			=> ,
-		V_sync			=> ,
-		C_sync			=> ,
-		Blanking		=> ,
-		dvalid			=> 
+		pclk			=> pclk_decode,
+		Y				=> Y_decode,
+		CbCr			=> CbCr_decode,
+		is_Cr			=> is_Cr_decode,
+		is_odd			=> is_odd_decode,
+		H_sync			=> H_sync_decode,
+		V_sync			=> V_sync_decode,
+		C_sync			=> C_sync_decode,
+		Blanking		=> Blanking_decode,
+		dvalid			=> dvalid_decode
 	);
-	
+
 	chroma_upsampling: component gc_dv_422_to_444 port map (
 		vclk			=> vclk,
-		pclk			=> ,
-		Y				=> ,
-		CbCr			=> ,
-		is_Cr			=> ,
-		is_odd			=> ,
-		H_sync			=> ,
-		V_sync			=> ,
-		C_sync			=> ,
-		Blanking		=> ,
-		dvalid			=> ,
-		pclk_out		=> ,
-		Y_out			=> ,
-		Cb_out			=> ,
-		Cr_out			=> ,
-		H_sync_out		=> ,
-		V_sync_out		=> ,
-		C_sync_out		=> ,
-		Blanking_out	=> ,
-		dvalid_out		=> 
+		pclk			=> pclk_decode,
+		Y				=> Y_decode,
+		CbCr			=> CbCr_decode,
+		is_Cr			=> is_Cr_decode,
+		is_odd			=> is_odd_decode,
+		H_sync			=> H_sync_decode,
+		V_sync			=> V_sync_decode,
+		C_sync			=> C_sync_decode,
+		Blanking		=> Blanking_decode,
+		dvalid			=> dvalid_decode,
+		pclk_out		=> pclk_444,
+		Y_out			=> Y_444,
+		Cb_out			=> Cb_444,
+		Cr_out			=> Cr_444,
+		H_sync_out		=> H_sync_444,
+		V_sync_out		=> V_sync_444,
+		C_sync_out		=> C_sync_444,
+		Blanking_out	=> Blanking_444,
+		dvalid_out		=> dvalid_444
 	);
-	
+
 	color_space_converter: component gc_dv_YCbCr_to_RGB port map (
 		vclk			=> vclk,
-		pclk			=> ,
-		Y				=> ,
-		Cb				=> ,
-		Cr				=> ,
-		H_sync			=> ,
-		V_sync			=> ,
-		C_sync			=> ,
-		Blanking		=> ,
-		dvalid			=> ,
+		pclk			=> pclk_444,
+		Y				=> Y_444,
+		Cb				=> Cb_444,
+		Cr				=> Cr_444,
+		H_sync			=> H_sync_444,
+		V_sync			=> V_sync_444,
+		C_sync			=> C_sync_444,
+		Blanking		=> Blanking_444,
+		dvalid			=> dvalid_444,
 		RGB_out_en		=> RGB_out_en,
-		pclk_out		=> ,
-		G_Y_out			=> ,
-		B_Cb_out		=> ,
-		R_Cr_out		=> ,
-		H_sync_out		=> ,
-		V_sync_out		=> ,
-		C_sync_out		=> ,
-		Blanking_out	=> ,
-		dvalid_out		=> 
+		pclk_out		=> pclk_CConv,
+		G_Y_out			=> G_Y_CConv,
+		B_Cb_out		=> B_Cb_CConv,
+		R_Cr_out		=> R_Cr_CConv,
+		H_sync_out		=> H_sync_CConv,
+		V_sync_out		=> V_sync_CConv,
+		C_sync_out		=> C_sync_CConv,
+		Blanking_out	=> Blanking_CConv,
+		dvalid_out		=> dvalid_CConv
 	);
-	
+
 	output_video_samples_to_DAC: component gc_dv_video_DAC port map (
 		vclk			=> vclk,
-		pclk			=> ,
-		G_Y				=> ,
-		B_Cb			=> ,
-		R_Cr			=> ,
-		H_sync			=> ,
-		V_sync			=> ,
-		C_sync			=> ,
-		Blanking		=> ,
-		dvalid			=> ,
+		pclk			=> pclk_CConv,
+		G_Y				=> G_Y_CConv,
+		B_Cb			=> B_Cb_CConv,
+		R_Cr			=> R_Cr_CConv,
+		H_sync			=> H_sync_CConv,
+		V_sync			=> V_sync_CConv,
+		C_sync			=> C_sync_CConv,
+		Blanking		=> Blanking_CConv,
+		dvalid			=> dvalid_CConv,
 		G_Y_DAC			=> G_Y_DAC,
 		B_Cb_DAC		=> B_Cb_DAC,
 		R_Cr_DAC		=> R_Cr_DAC,
