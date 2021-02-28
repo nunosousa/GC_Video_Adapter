@@ -9,7 +9,7 @@ end entity;
 
 architecture behav of gc_dv_top_level_tb is
 
-	component gc_dv_decode is
+	component gc_dv_top_level is
         port(
             vclk			: in	std_logic;
             vphase			: in	std_logic;

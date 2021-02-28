@@ -104,7 +104,7 @@ architecture behav of gc_dv_top_level is
 			C_sync		: in	std_logic;
 			Blanking	: in	std_logic;
 			dvalid		: in	std_logic;
-			RGB_out		: in	std_logic;
+			RGB_out_en	: in	std_logic;
 			pclk_out	: out	std_logic;
 			G_Y_out		: out	std_logic_vector(7 downto 0);
 			B_Cb_out	: out	std_logic_vector(7 downto 0);

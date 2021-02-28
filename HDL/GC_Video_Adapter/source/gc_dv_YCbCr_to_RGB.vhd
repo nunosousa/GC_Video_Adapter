@@ -32,7 +32,7 @@ end entity;
 architecture behav of gc_dv_YCbCr_to_RGB is
 	
 begin
-	process : process(vclk)
+	color_conversion_process : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
 			-- If RGB output is enabled, then perform conversion

@@ -9,7 +9,7 @@ entity gc_dv_video_DAC is
 		vclk			: in	std_logic;
 		pclk			: in	std_logic;
 		G_Y				: in	std_logic_vector(7 downto 0);
-		B_b				: in	std_logic_vector(7 downto 0);
+		B_Cb			: in	std_logic_vector(7 downto 0);
 		R_Cr			: in	std_logic_vector(7 downto 0);
 		H_sync			: in	std_logic;
 		V_sync			: in	std_logic;
