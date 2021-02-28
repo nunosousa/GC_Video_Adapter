@@ -37,8 +37,9 @@ begin
 		if (rising_edge(vclk)) then
 			-- If RGB output is enabled, then perform conversion
 			if (RGB_out_en = '1') then
-
-			else
+				-- tbd
+			else -- Output YCbCr samples
+				pclk_out <= pclk;
 				G_Y_out <= Y;
 				B_Cb_out <= Cb;
 				R_Cr_out <= Cr;

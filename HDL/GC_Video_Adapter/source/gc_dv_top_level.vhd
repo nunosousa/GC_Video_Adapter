@@ -17,7 +17,6 @@ entity gc_dv_top_level is
 		nC_sync_DAC		: out	std_logic := '0';
 		nBlanking_DAC	: out	std_logic := '0'
 	);
-	
 end entity;
 
 architecture behav of gc_dv_top_level is
