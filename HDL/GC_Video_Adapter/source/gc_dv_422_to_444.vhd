@@ -43,7 +43,7 @@ architecture behav of gc_dv_422_to_444 is
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
 	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
 	type flag_array_type is array (natural range <>) of std_logic;
-	signal pclk_pipe		: flag_array_type(0 to delay_plen*2 - 1) := (others => '0');
+	signal pclk_pipe		: flag_array_type(0 to delay_plen*2) := (others => '0');
 	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal V_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal C_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
@@ -51,7 +51,7 @@ architecture behav of gc_dv_422_to_444 is
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	
 	-- Retain previous pclk.
-	signal last_pclk			: std_logic := '0';
+	signal last_pclk			: std_logic := '1';
 	
 begin
 	duplicate_chroma_samples : process(vclk)
@@ -61,9 +61,9 @@ begin
 			last_pclk <= pclk;
 			
 			if (last_pclk /= pclk) then
-				-- Delay Y sample values and flags
-				pclk_pipe <= pclk & pclk_pipe(0 to delay_plen*2 - 2);
-				pclk_out <= pclk_pipe(delay_plen*2 - 1);
+				-- Delay pixel clock transitions
+				pclk_pipe <= pclk & pclk_pipe(0 to delay_plen*2 - 1);
+				pclk_out <= pclk_pipe(delay_plen*2);
 			end if;
 
 			if ((last_pclk = '0') and (pclk = '1')) then
@@ -99,7 +99,7 @@ begin
 					Cb_sample <= CbCr;
 					Cb_loaded <= '1';
 				end if; -- if (is_Cr = '1')
-			end if; -- if (pclk /= last_pclk)
+			end if; -- if ((last_pclk = '0') and (pclk = '1'))
 		end if;	-- if (rising_edge(vclk))
 	end process; -- duplicate_chroma_samples : process(pclk)
 end behav;
