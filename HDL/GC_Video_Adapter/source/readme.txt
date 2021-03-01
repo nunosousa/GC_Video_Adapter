@@ -25,4 +25,4 @@ ghdl -a gc_dv_video_DAC.vhd;
 ghdl -a gc_dv_top_level.vhd;
 ghdl -a gc_dv_top_level_tb01.vhd;
 ghdl -e gc_dv_top_level_tb;
-ghdl -r gc_dv_top_level_tb --vcd=gc_dv_top_level_tb01
+ghdl -r gc_dv_top_level_tb --vcd=gc_dv_top_level_tb01.vcd

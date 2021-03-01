@@ -99,6 +99,14 @@ begin
 					Cb_sample <= CbCr;
 					Cb_loaded <= '1';
 				end if; -- if (is_Cr = '1')
+				
+				-- If incoming data is in blanking state, set defaults
+				if (Blanking = '1') then
+					Cr_sample <= x"80";
+					Cb_sample <= x"80";
+					Cr_loaded <= '1';
+					Cb_loaded <= '1';
+				end if; -- if (Blanking = '1')
 			end if; -- if ((last_pclk = '0') and (pclk = '1'))
 		end if;	-- if (rising_edge(vclk))
 	end process; -- duplicate_chroma_samples : process(pclk)
