@@ -47,9 +47,7 @@ architecture behav of gc_dv_top_level_tb is
 	type test_vector_array is array (natural range <>) of test_vector;
 	constant test_vectors : test_vector_array := (
 		-- vclk, vphase, vdata, RGB_out_en
-		  ('0',  '0',    x"00", '0'),	-- fast data, blanking data, raw flags low, invalid number of samples
-		  ('1',  '0',    x"00", '0'),
-		  ('0',  '0',    x"00", '0'),
+		  ('0',  '0',    x"00", '0'),	-- fast data, blanking data, raw flags high
 		  ('1',  '0',    x"00", '0'),
 		  ('0',  '0',    x"00", '0'),
 		  ('1',  '0',    x"00", '0'),
@@ -84,8 +82,6 @@ architecture behav of gc_dv_top_level_tb is
 		  ('0',  '0',    x"02", '0'),
 		  ('1',  '0',    x"02", '0'),
 		  
-		  ('0',  '1',    x"04", '0'),	-- fast data, invalid number of samples
-		  ('1',  '1',    x"04", '0'),
 		  ('0',  '1',    x"04", '0'),
 		  ('1',  '1',    x"04", '0'),
 		  ('0',  '1',    x"04", '0'),
@@ -115,6 +111,16 @@ architecture behav of gc_dv_top_level_tb is
 		  ('1',  '0',    x"80", '0'),
 		  ('0',  '0',    x"80", '0'),
 		  ('1',  '0',    x"80", '0'),
+		  
+		  ('0',  '1',    x"00", '0'),
+		  ('1',  '1',    x"00", '0'),
+		  ('0',  '1',    x"00", '0'),
+		  ('1',  '1',    x"00", '0'),
+		  
+		  ('0',  '0',    x"00", '0'),
+		  ('1',  '0',    x"00", '0'),
+		  ('0',  '0',    x"00", '0'),
+		  ('1',  '0',    x"00", '0'),
 		  
 		  ('0',  '1',    x"00", '0'),
 		  ('1',  '1',    x"00", '0'),
