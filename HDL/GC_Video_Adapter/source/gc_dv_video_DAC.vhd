@@ -16,12 +16,12 @@ entity gc_dv_video_DAC is
 		C_sync			: in	std_logic;
 		Blanking		: in	std_logic;
 		dvalid			: in	std_logic;
-		G_Y_DAC			: out	std_logic_vector(7 downto 0);
-		B_Cb_DAC		: out	std_logic_vector(7 downto 0);
-		R_Cr_DAC		: out	std_logic_vector(7 downto 0);
-		clk_DAC			: out	std_logic;
-		nC_sync_DAC		: out	std_logic;
-		nBlanking_DAC	: out	std_logic
+		G_Y_DAC			: out	std_logic_vector(7 downto 0) := x"00";
+		B_Cb_DAC		: out	std_logic_vector(7 downto 0) := x"00";
+		R_Cr_DAC		: out	std_logic_vector(7 downto 0) := x"00";
+		clk_DAC			: out	std_logic := '0';
+		nC_sync_DAC		: out	std_logic := '0';
+		nBlanking_DAC	: out	std_logic := '0'
 	);
 end entity;
 
