@@ -25,7 +25,7 @@ end entity;
 architecture behav of gc_dv_decode is
 	-- vdata buffer
 	type vdata_buffer_type is array(0 to 3) of std_logic_vector(7 downto 0);
-	signal vdata_buffer			: vdata_buffer_type := (others => x"FF");
+	signal vdata_buffer			: vdata_buffer_type := (others => x"00");
 	
 	-- vphase state signals
 	signal last_vphase			: std_logic := '0';
