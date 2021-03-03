@@ -18,9 +18,9 @@ entity gc_dv_422_to_444 is
 		Blanking	: in	std_logic;
 		dvalid		: in	std_logic;
 		pclk_out	: out	std_logic := '0';
-		Y_out		: out	std_logic_vector(7 downto 0) := x"10";
-		Cb_out		: out	std_logic_vector(7 downto 0) := x"80";
-		Cr_out		: out	std_logic_vector(7 downto 0) := x"80";
+		Y_out		: out	std_logic_vector(7 downto 0) := x"00";
+		Cb_out		: out	std_logic_vector(7 downto 0) := x"00";
+		Cr_out		: out	std_logic_vector(7 downto 0) := x"00";
 		H_sync_out	: out	std_logic := '0';
 		V_sync_out	: out	std_logic := '0';
 		C_sync_out	: out	std_logic := '0';
@@ -31,8 +31,8 @@ end entity;
 
 architecture behav of gc_dv_422_to_444 is
 	-- Chroma samples
-	signal Cb_sample		: std_logic_vector(7 downto 0) := x"80";
-	signal Cr_sample		: std_logic_vector(7 downto 0) := x"80";
+	signal Cb_sample		: std_logic_vector(7 downto 0) := x"00";
+	signal Cr_sample		: std_logic_vector(7 downto 0) := x"00";
 	
 	-- Chroma flags
 	signal Cb_loaded		: std_logic := '0';
@@ -41,7 +41,7 @@ architecture behav of gc_dv_422_to_444 is
 	-- Pipes for luma samples and flags
 	constant delay_plen		: natural := 2;
 	type sample_array_type is array (natural range <>) of std_logic_vector(7 downto 0);
-	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"10");
+	signal Y_pipe			: sample_array_type(0 to delay_plen - 1) := (others => x"00");
 	type flag_array_type is array (natural range <>) of std_logic;
 	signal pclk_pipe		: flag_array_type(0 to delay_plen*2) := (others => '0');
 	signal H_sync_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
@@ -97,12 +97,12 @@ begin
 				
 				-- If incoming data is in blanking state, set defaults
 				if (Blanking = '1') then
-					Cr_sample <= x"80";
-					Cb_sample <= x"80";
+					Cr_sample <= CbCr;
+					Cb_sample <= CbCr;
 					Cr_loaded <= '1';
 					Cb_loaded <= '1';
 				end if; -- if (Blanking = '1')
-			end if; -- if ((last_pclk = '0') and (pclk = '1'))
+			end if; -- if ((pclk_pipe(0) = '0') and (pclk = '1'))
 		end if;	-- if (rising_edge(vclk))
 	end process; -- duplicate_chroma_samples : process(pclk)
 end behav;
