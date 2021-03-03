@@ -51,7 +51,7 @@ architecture behav of gc_dv_422_to_444 is
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	
 	-- Retain previous pclk.
-	signal last_pclk			: std_logic := '1';
+	signal last_pclk			: std_logic := '0';
 	
 begin
 	duplicate_chroma_samples : process(vclk)

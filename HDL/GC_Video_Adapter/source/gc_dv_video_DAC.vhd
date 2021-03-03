@@ -27,17 +27,15 @@ end entity;
 
 architecture behav of gc_dv_video_DAC is
 	-- Retain previous pclk.
-	signal last_pclk			: std_logic := '1';
-	
+	signal last_pclk			: std_logic := '0';
 begin
 	duplicate_chroma_samples : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			-- Store copy of pclk
-			last_pclk <= pclk;
-			
 			if (last_pclk /= pclk) then
-				clk_DAC <= pclk;
+				-- Delay pixel clock transitions
+				last_pclk <= pclk;
+				clk_DAC <= last_pclk;
 			end if;
 
 			if ((last_pclk = '0') and (pclk = '1')) then
