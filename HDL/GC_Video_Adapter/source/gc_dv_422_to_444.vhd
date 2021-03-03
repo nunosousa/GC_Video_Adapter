@@ -50,23 +50,18 @@ architecture behav of gc_dv_422_to_444 is
 	signal Blanking_pipe	: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	signal dvalid_pipe		: flag_array_type(0 to delay_plen - 1) := (others => '0');
 	
-	-- Retain previous pclk.
-	signal last_pclk			: std_logic := '0';
-	
 begin
 	duplicate_chroma_samples : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			-- Store copy of pclk
-			last_pclk <= pclk;
-			
-			if (last_pclk /= pclk) then
+			-- Store copy and delay pclk
+			if (pclk_pipe(0) /= pclk) then
 				-- Delay pixel clock transitions
 				pclk_pipe <= pclk & pclk_pipe(0 to delay_plen*2 - 1);
 				pclk_out <= pclk_pipe(delay_plen*2);
 			end if;
 
-			if ((last_pclk = '0') and (pclk = '1')) then
+			if ((pclk_pipe(0) = '0') and (pclk = '1')) then
 				-- Delay Y sample values and flags
 				Y_pipe <= Y & Y_pipe(0 to delay_plen - 2);
 				H_sync_pipe <= H_sync & H_sync_pipe(0 to delay_plen - 2);
