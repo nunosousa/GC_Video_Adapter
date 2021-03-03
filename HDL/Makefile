@@ -19,6 +19,10 @@ gc_dv_top_level_tb01: gc_dv_top_level
 	$(GHDL_CMD) -a $(GHDL_AFLAGS) $(TESTBENCHPATH)$@$(VHDLEX)
 	$(GHDL_CMD) -e $(GHDL_EFLAGS) $(GC_DV_TOP_LEVEL_TB)
 	$(GHDL_CMD) -r $(GHDL_RFLAGS) $(GC_DV_TOP_LEVEL_TB) --vcd=$(SIMULATIONPATH)$@".vcd"
+gc_dv_top_level_tb02: gc_dv_top_level
+	$(GHDL_CMD) -a $(GHDL_AFLAGS) $(TESTBENCHPATH)$@$(VHDLEX)
+	$(GHDL_CMD) -e $(GHDL_EFLAGS) $(GC_DV_TOP_LEVEL_TB)
+	$(GHDL_CMD) -r $(GHDL_RFLAGS) $(GC_DV_TOP_LEVEL_TB) --vcd=$(SIMULATIONPATH)$@".vcd"
 gc_dv_top_level: gc_dv_decode gc_dv_422_to_444 gc_dv_YCbCr_to_RGB gc_dv_video_DAC
 	$(GHDL_CMD) -a $(GHDL_AFLAGS) $(SOURCEPATH)$@$(VHDLEX)
 
