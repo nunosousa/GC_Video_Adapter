@@ -17,8 +17,8 @@ entity gc_dv_decode is
 		H_sync	: out	std_logic;
 		V_sync	: out	std_logic;
 		C_sync	: out	std_logic;
-		Blanking: out	std_logic := '1';
-		dvalid	: out	std_logic := '0'
+		Blanking: out	std_logic;
+		dvalid	: out	std_logic
 	);
 end entity;
 
@@ -54,6 +54,8 @@ begin
 				if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
 					pclk <= '1';
 				end if;
+			else
+				pclk <= '0';
 			end if;
 			
 			-- Store new vdata sample and shift samples
