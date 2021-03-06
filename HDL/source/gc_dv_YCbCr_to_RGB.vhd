@@ -46,7 +46,7 @@ begin
 				H_sync_out <= H_sync;
 				V_sync_out <= V_sync;
 				C_sync_out <= C_sync;
-				Blanking_out <= Blanking;
+				Blanking_out <= '0'; -- In YCbCr mode, blanking levels are set separately to Y and CbCr.
 				dvalid_out <= dvalid;
 			end if; -- if (RGB_out_en = '1')
 		end if;	-- if (rising_edge(vclk))
