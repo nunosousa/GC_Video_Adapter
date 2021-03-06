@@ -9,15 +9,15 @@ entity gc_dv_decode is
 		vclk	: in	std_logic;
 		vphase	: in	std_logic;
 		vdata	: in	std_logic_vector(7 downto 0);
-		pclk	: out	std_logic := '0';
-		Y		: out	std_logic_vector(7 downto 0) := x"10";
-		CbCr	: out	std_logic_vector(7 downto 0) := x"80";
-		is_Cr	: out	std_logic := '0';
-		is_odd	: out	std_logic := '0';
-		H_sync	: out	std_logic := '0';
-		V_sync	: out	std_logic := '0';
-		C_sync	: out	std_logic := '0';
-		Blanking: out	std_logic := '0';
+		pclk	: out	std_logic;
+		Y		: out	std_logic_vector(7 downto 0);
+		CbCr	: out	std_logic_vector(7 downto 0);
+		is_Cr	: out	std_logic;
+		is_odd	: out	std_logic;
+		H_sync	: out	std_logic;
+		V_sync	: out	std_logic;
+		C_sync	: out	std_logic;
+		Blanking: out	std_logic := '1';
 		dvalid	: out	std_logic := '0'
 	);
 end entity;
@@ -25,7 +25,7 @@ end entity;
 architecture behav of gc_dv_decode is
 	-- vdata buffer
 	type vdata_buffer_type is array(0 to 3) of std_logic_vector(7 downto 0);
-	signal vdata_buffer			: vdata_buffer_type := (others => x"00");
+	signal vdata_buffer			: vdata_buffer_type;
 	
 	-- vphase state signals
 	signal last_vphase			: std_logic := '0';

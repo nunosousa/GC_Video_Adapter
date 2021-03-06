@@ -10,12 +10,12 @@ entity gc_dv_top_level is
 		vphase			: in	std_logic;
 		vdata			: in	std_logic_vector(7 downto 0);
 		RGB_out_en		: in	std_logic;
-		G_Y_DAC			: out	std_logic_vector(7 downto 0) := x"00";
-		B_Cb_DAC		: out	std_logic_vector(7 downto 0) := x"00";
-		R_Cr_DAC		: out	std_logic_vector(7 downto 0) := x"00";
-		clk_DAC			: out	std_logic := '0';
-		nC_sync_DAC		: out	std_logic := '0';
-		nBlanking_DAC	: out	std_logic := '0'
+		G_Y_DAC			: out	std_logic_vector(7 downto 0);
+		B_Cb_DAC		: out	std_logic_vector(7 downto 0);
+		R_Cr_DAC		: out	std_logic_vector(7 downto 0);
+		clk_DAC			: out	std_logic;
+		nC_sync_DAC		: out	std_logic;
+		nBlanking_DAC	: out	std_logic
 	);
 end entity;
 
