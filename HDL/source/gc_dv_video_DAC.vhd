@@ -26,25 +26,16 @@ entity gc_dv_video_DAC is
 end entity;
 
 architecture behav of gc_dv_video_DAC is
-	-- Retain previous pclk.
-	signal last_pclk			: std_logic := '0';
 begin
-	duplicate_chroma_samples : process(vclk)
+	set_DAC_output : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			if (last_pclk /= pclk) then
-				-- Delay pixel clock transitions
-				last_pclk <= pclk;
-				clk_DAC <= last_pclk;
-			end if;
-
-			if ((last_pclk = '0') and (pclk = '1')) then
-				G_Y_DAC <= G_Y;
-				B_Cb_DAC <= B_Cb;
-				R_Cr_DAC <= R_Cr;
-				nC_sync_DAC <= not C_sync;
-				nBlanking_DAC <= not Blanking;
-			end if; -- if ((last_pclk = '0') and (pclk = '1'))
+			clk_DAC <= pclk;
+			G_Y_DAC <= G_Y;
+			B_Cb_DAC <= B_Cb;
+			R_Cr_DAC <= R_Cr;
+			nC_sync_DAC <= not C_sync;
+			nBlanking_DAC <= not Blanking;
 		end if;	-- if (rising_edge(vclk))
-	end process; -- duplicate_chroma_samples : process(pclk)
+	end process; -- set_DAC_output : process(pclk)
 end behav;

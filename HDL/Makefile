@@ -12,7 +12,7 @@ GHDL_SFLAGS =
 
 .PHONY: clean
 
-all: gc_dv_top_level_tb01 gc_dv_video_DAC_tb01 gc_dv_YCbCr_to_RGB_tb01 gc_dv_422_to_444_tb01 gc_dv_decode_tb01 gc_dv_decode_tb02 gc_dv_decode_tb03
+all: gc_dv_top_level_tb01 gc_dv_top_level_tb02 gc_dv_video_DAC_tb01 gc_dv_YCbCr_to_RGB_tb01 gc_dv_422_to_444_tb01 gc_dv_decode_tb01 gc_dv_decode_tb02 gc_dv_decode_tb03
 
 GC_DV_TOP_LEVEL_TB = gc_dv_top_level_tb
 gc_dv_top_level_tb01: gc_dv_top_level

@@ -30,7 +30,6 @@ entity gc_dv_YCbCr_to_RGB is
 end entity;
 
 architecture behav of gc_dv_YCbCr_to_RGB is
-	
 begin
 	color_conversion_process : process(vclk)
 	begin
