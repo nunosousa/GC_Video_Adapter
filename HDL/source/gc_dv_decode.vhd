@@ -23,6 +23,10 @@ entity gc_dv_decode is
 end entity;
 
 architecture behav of gc_dv_decode is
+	-- New input signals
+	signal new_vdata			: std_logic_vector(7 downto 0);
+	signal new_vphase			: std_logic := '0';
+	
 	-- vdata buffer
 	type vdata_buffer_type is array(0 to 3) of std_logic_vector(7 downto 0);
 	signal vdata_buffer			: vdata_buffer_type;
@@ -38,12 +42,22 @@ architecture behav of gc_dv_decode is
 	signal last_dvalid			: std_logic := '0';
 
 begin
+	-- Register input data
+	register_inputs : process(vclk)
+	begin
+		if (rising_edge(vclk)) then
+			-- Update vdata
+			new_vdata <= vdata;
+			-- Update vphase
+			new_vphase <= vphase;
+		end if;	-- if (rising_edge(vclk))
+	end process;
+	
 	-- vdata logic
 	vdata_process : process(vclk)
 		variable valid_sample	: std_logic := '0';
 		variable Y_sample		: std_logic_vector(7 downto 0);
 		variable CbCr_sample	: std_logic_vector(7 downto 0);
-
 	begin
 		if (rising_edge(vclk)) then
 			-- Generate output clock signal. Adjust pixel clock so that the rising edle is in the middle  of the video sample.
@@ -59,7 +73,7 @@ begin
 			end if;
 			
 			-- Store new vdata sample and shift samples
-			vdata_buffer <= vdata & vdata_buffer(0 to 2);
+			vdata_buffer <= new_vdata & vdata_buffer(0 to 2);
 			
 			-- Increment number of vdata samples taken on vclk
 			if (vsample_count < 4) then
@@ -82,10 +96,10 @@ begin
 			end if;
 			
 			-- Update previous vphase state for comparison
-			last_vphase <= vphase;
+			last_vphase <= new_vphase;
 			
 			-- Process new video sample using vphase as trigger
-			if (vphase /= last_vphase) then
+			if (new_vphase /= last_vphase) then
 				vsample_count <= 1; -- Set sample counter to 1 (current sample) after vphase change
 			
 				-- Get Y and CbCr sample depending on the vdata stream format
