@@ -46,9 +46,7 @@ begin
 	register_inputs : process(vclk)
 	begin
 		if (rising_edge(vclk)) then
-			-- Update vdata
 			new_vdata <= vdata;
-			-- Update vphase
 			new_vphase <= vphase;
 		end if;	-- if (rising_edge(vclk))
 	end process;
@@ -60,7 +58,8 @@ begin
 		variable CbCr_sample	: std_logic_vector(7 downto 0);
 	begin
 		if (rising_edge(vclk)) then
-			-- Generate output clock signal. Adjust pixel clock so that the rising edle is in the middle  of the video sample.
+			-- Generate output clock signal.
+			-- Adjust pixel clock so that the rising edle is in the middle  of the video sample.
 			if (last_dvalid = '1') then
 				if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
 					pclk <= '0';
