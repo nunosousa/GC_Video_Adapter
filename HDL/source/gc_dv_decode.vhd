@@ -33,7 +33,7 @@ architecture behav of gc_dv_decode is
 	
 	-- vphase state signals
 	signal last_vphase			: std_logic := '0';
-	signal vsample_count		: natural range 0 to 5 := 0;
+	signal vsample_count		: natural range 0 to 4 := 0;
 	
 	-- Retain last video mode (<Y0><Y0>... or <Y0>...) for valid data detection
 	signal last_vmode			: std_logic := '0'; -- Default '0' is <Y0><Y0>...
@@ -63,12 +63,12 @@ begin
 			vdata_buffer <= new_vdata & vdata_buffer(0 to 2);
 			
 			-- Increment number of vdata samples taken on vclk
-			if (vsample_count <= 4) then
+			if (vsample_count < 4) then
 				vsample_count <= vsample_count + 1;
 			end if;
 			
 			-- Set defaults for the case that no valid samples is processed.
-			if (vsample_count >= 4) then
+			if (vsample_count = 4) then
 				Y <= x"10";
 				CbCr <= x"80";
 				is_Cr <= '0';
@@ -135,17 +135,16 @@ begin
 
 			-- Generate output clock signal.
 			-- Adjust pixel clock so that the rising edle is in the middle  of the video sample.
-			if (last_dvalid = '1') then
-				case vsample_count is
-					when 0 => pclk <= '0';
-					when 1 => if (last_vmode = '0') then pclk <= '0'; else pclk <= '1'; end if;
-					when 2 => if (last_vmode = '0') then pclk <= '1'; else pclk <= '0'; end if;
-					when 3 => if (last_vmode = '0') then pclk <= '1'; else pclk <= '0'; end if;
-					when 4 => pclk <= '0';
-					when 5 => pclk <= '0';
-					when others => pclk <= '0';
-				end case;
-			else
+			case vsample_count is
+				when 0 => pclk <= '0';
+				when 1 => if (last_vmode = '0') then pclk <= '0'; else pclk <= '1'; end if;
+				when 2 => if (last_vmode = '0') then pclk <= '1'; else pclk <= '0'; end if;
+				when 3 => if (last_vmode = '0') then pclk <= '1'; else pclk <= '0'; end if;
+				when 4 => pclk <= '0';
+				when others => pclk <= '0';
+			end case;
+
+			if (last_dvalid = '0') then
 				pclk <= '0';
 			end if;
 		end if;	-- if (rising_edge(vclk))
