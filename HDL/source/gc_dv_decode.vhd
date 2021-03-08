@@ -41,6 +41,10 @@ architecture behav of gc_dv_decode is
 	-- Retain previous dvalid for pixel clock generation enable.
 	signal last_dvalid			: std_logic := '0';
 
+	-- New samples
+	signal valid_sample			: std_logic := '0';
+	signal Y_sample				: std_logic_vector(7 downto 0);
+	signal CbCr_sample			: std_logic_vector(7 downto 0);
 begin
 	-- Register input data
 	register_inputs : process(vclk)
@@ -53,34 +57,17 @@ begin
 	
 	-- vdata logic
 	vdata_process : process(vclk)
-		variable valid_sample	: std_logic := '0';
-		variable Y_sample		: std_logic_vector(7 downto 0);
-		variable CbCr_sample	: std_logic_vector(7 downto 0);
 	begin
 		if (rising_edge(vclk)) then
-			-- Generate output clock signal.
-			-- Adjust pixel clock so that the rising edle is in the middle  of the video sample.
-			if (last_dvalid = '1') then
-				if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
-					pclk <= '0';
-				end if;
-				if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
-					pclk <= '1';
-				end if;
-			else
-				pclk <= '0';
-			end if;
-			
 			-- Store new vdata sample and shift samples
 			vdata_buffer <= new_vdata & vdata_buffer(0 to 2);
 			
 			-- Increment number of vdata samples taken on vclk
-			if (vsample_count < 4) then
+			if (vsample_count <= 4) then
 				vsample_count <= vsample_count + 1;
 			end if;
 			
 			-- Set defaults for the case that no valid samples is processed.
-			--if ((vsample_count = 4) or ((vsample_count = 2) and (last_vmode = '1'))) then
 			if (vsample_count = 4) then
 				Y <= x"10";
 				CbCr <= x"80";
@@ -100,24 +87,23 @@ begin
 			-- Process new video sample using vphase as trigger
 			if (new_vphase /= last_vphase) then
 				vsample_count <= 1; -- Set sample counter to 1 (current sample) after vphase change
-			
 				-- Get Y and CbCr sample depending on the vdata stream format
 				if (vsample_count = 2) then		-- vdata: <Y0><CbCr0><Y1><CbCr1>...
 					last_vmode <= '1';
-					valid_sample := '1';
-					Y_sample := vdata_buffer(1);
-					CbCr_sample := vdata_buffer(0);
+					valid_sample <= '1';
+					Y_sample <= vdata_buffer(1);
+					CbCr_sample <= vdata_buffer(0);
 				elsif (vsample_count = 4) then	-- vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
 					last_vmode <= '0';
-					valid_sample := '1';
-					Y_sample := vdata_buffer(3);
-					CbCr_sample := vdata_buffer(1);
+					valid_sample <= '1';
+					Y_sample <= vdata_buffer(3);
+					CbCr_sample <= vdata_buffer(1);
 				end if;	-- if (vsample_count = 2)
 			end if;	-- if (vphase /= last_vphase)
 			
 			-- If new sample exists, set output interface video values and flags
 			if (valid_sample = '1') then
-				valid_sample := '0';
+				valid_sample <= '0';
 				dvalid <= '1';
 				last_dvalid <= '1';
 				
@@ -146,6 +132,19 @@ begin
 					end if;	-- if (vphase = '1')
 				end if;	-- if (Y_sample = x"00")
 			end if;	-- if (valid_sample = '1')
+
+			-- Generate output clock signal.
+			-- Adjust pixel clock so that the rising edle is in the middle  of the video sample.
+			if (last_dvalid = '1') then
+				if (((vsample_count = 4) and (last_vmode = '0')) or ((vsample_count = 2) and (last_vmode = '1'))) then
+					pclk <= '0';
+				end if;
+				if (((vsample_count = 2) and (last_vmode = '0')) or ((vsample_count = 1) and (last_vmode = '1'))) then
+					pclk <= '1';
+				end if;
+			else
+				pclk <= '0';
+			end if;
 		end if;	-- if (rising_edge(vclk))
 	end process;
 end behav;
