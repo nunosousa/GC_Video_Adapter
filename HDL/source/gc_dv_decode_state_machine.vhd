@@ -38,6 +38,10 @@ architecture behav of gc_dv_decode is
     signal CbCr_fast			: std_logic_vector(7 downto 0);
     signal sample_vphase        : std_logic;
     signal sample_ready         : std_logic := '0';
+
+    -- Pixel clock
+    signal pclk_slow            : std_logic;
+    signal pclk_fast            : std_logic;
 begin
     -- State machine transitions - vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
     state_update_slow: process(vclk)
@@ -48,9 +52,11 @@ begin
             -- State machine transitions
             case state_slow is
                 when s0 =>  -- Reset state - Y video sample on a new cycle.
+                    pclk_slow <= '0';
                     Y_slow <= vdata;
                     state_slow <= s2;
                 when s1 =>  -- Y sample on a new cycle.
+                    pclk_slow <= '0';
                     Y_slow <= vdata;
                     if (previous_vphase /= vphase) then
                         state_slow <= s2; -- Slow mode detected.
@@ -62,12 +68,14 @@ begin
                         state_slow <= s0; -- Reset - a vphase change chould have happened.
                     end if;
                 when s2 =>  -- Still Y sample
+                    pclk_slow <= '0';
                     if (previous_vphase /= vphase) then
                         state_slow <= s0; -- Reset - wrong timing for vphase change.
                     else
                         state_slow <= s3;
                     end if;
                 when s3 =>  -- CbCr sample
+                    pclk_slow <= '1';
                     CbCr_slow <= vdata;
                     if (previous_vphase /= vphase) then
                         state_slow <= s0; -- Reset - Fast mode detected.
@@ -75,6 +83,7 @@ begin
                         state_slow <= s4;
                     end if;
                 when s4 =>  -- Still CbCr sample
+                    pclk_slow <= '1';
                     if (previous_vphase /= vphase) then
                         state_slow <= s0; -- Reset - wrong timing for vphase change.
                     else
@@ -94,9 +103,11 @@ begin
             -- State machine transitions
             case state_fast is
                 when s0 =>  -- Reset state - Y video sample on a new cycle.
+                    pclk_fast <= '0';
                     Y_fast <= vdata;
                     state_fast <= s2;
                 when s1 =>  -- Y sample on a new cycle
+                    pclk_fast <= '0';
                     Y_fast <= vdata;
                     if (previous_vphase /= vphase) then
                         state_fast <= s2; -- Fast mode detected.
@@ -108,6 +119,7 @@ begin
                         state_fast <= s0; -- Reset - a vphase change chould have happened.
                     end if;
                 when s2 =>  -- CbCr sample
+                    pclk_fast <= '1';
                     CbCr_fast <= vdata;
                     if (previous_vphase /= vphase) then
                         state_fast <= s0; -- Reset - wrong timing for vphase change.
