@@ -148,7 +148,8 @@ begin
 
     -- Select output source from state machines
     source_select: process(vclk)
-        variable vphase_sample          : std_logic := '0';
+        variable valid_sample          : std_logic;
+        variable vphase_sample          : std_logic;
         variable Y_sample               : std_logic_vector(7 downto 0);
         variable CbCr_sample            : std_logic_vector(7 downto 0);
     begin
@@ -156,45 +157,53 @@ begin
             -- Select source
             if (dvalid_slow = '1') then
                 dvalid_slow <= '0';
+                valid_sample := '1';
                 vphase_sample := vphase_slow_validated;
                 Y_sample := Y_slow_validated;
                 CbCr_sample := CbCr_slow_validated;
             elsif (dvalid_fast = '1') then
                 dvalid_fast <= '0';
+                valid_sample := '1';
                 vphase_sample := vphase_fast_validated;
                 Y_sample := Y_fast_validated;
                 CbCr_sample := CbCr_fast_validated;
             else
+                valid_sample := '0';
                 vphase_sample := '0';
-                Y_sample := Y_fast_validated;
-                CbCr_sample := CbCr_fast_validated;
+                Y_sample := x"00";
+                CbCr_sample := x"00";
             end if;
 
-            if (Y_sample = x"00") then	-- blanking data
-                Y <= x"10";
-                CbCr <= x"80";
-                H_sync <= not CbCr_sample(4);	-- Active low.
-                V_sync <= not CbCr_sample(5);	-- Active low.
-                is_odd <= not CbCr_sample(6);	-- Active low.
-                C_sync <= not CbCr_sample(7);	-- Active low.
-                Blanking <= '1';
-                is_Cr <= '0';
-            else						-- video sample
-                Y <= Y_sample;
-                CbCr <= CbCr_sample;
-                H_sync <= '0';
-                V_sync <= '0';
-                is_odd <= '0';
-                C_sync <= '0';
-                Blanking <= '0';
-                
-                if (vphase_sample = '1') then
-                    is_Cr <= '1';
-                else
-                    is_Cr <= '0';
-                end if;	-- if (vphase = '1')
-            end if;	-- if (Y_sample = x"00")
-
+			-- If new sample exists, set output interface video values and flags
+			if (valid_sample = '1') then
+				valid_sample := '0';
+				dvalid <= '1';
+				
+				if (Y_sample = x"00") then	-- blanking data
+					Y <= x"10";
+					CbCr <= x"80";
+					H_sync <= not CbCr_sample(4);	-- Active low.
+					V_sync <= not CbCr_sample(5);	-- Active low.
+					is_odd <= not CbCr_sample(6);	-- Active low.
+					C_sync <= not CbCr_sample(7);	-- Active low.
+					Blanking <= '1';
+					is_Cr <= '0';
+				else						-- video sample
+					Y <= Y_sample;
+					CbCr <= CbCr_sample;
+					H_sync <= '0';
+					V_sync <= '0';
+					is_odd <= '0';
+					C_sync <= '0';
+					Blanking <= '0';
+					
+					if (vphase_sample = '1') then
+						is_Cr <= '1';
+					else
+						is_Cr <= '0';
+					end if;	-- if (vphase = '1')
+				end if;	-- if (Y_sample = x"00")
+			end if;	-- if (valid_sample = '1')
         end if; -- if (rising_edge(vclk))
     end process;
 end behav;
