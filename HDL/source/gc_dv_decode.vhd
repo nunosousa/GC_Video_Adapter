@@ -25,25 +25,27 @@ end entity;
 architecture behav of gc_dv_decode is
     -- State machine state definition
     type state_typ is (reset_get_Y, get_Y, get_Y_x2, get_CbCr, get_CbCr_x2);
-    signal state_slow           : state_typ := reset_get_Y;
-    signal state_fast           : state_typ := reset_get_Y;
+    signal state_slow               : state_typ := reset_get_Y;
+    signal state_fast               : state_typ := reset_get_Y;
     
     -- Sample stores
-	signal previous_vphase		: std_logic := '0';
-    signal Y_slow				: std_logic_vector(7 downto 0);
-    signal Y_slow_out			: std_logic_vector(7 downto 0);
-    signal Y_fast				: std_logic_vector(7 downto 0);
-    signal Y_fast_out			: std_logic_vector(7 downto 0);
-    signal CbCr_slow			: std_logic_vector(7 downto 0);
-    signal CbCr_slow_out		: std_logic_vector(7 downto 0);
-    signal CbCr_fast			: std_logic_vector(7 downto 0);
-    signal CbCr_fast_out		: std_logic_vector(7 downto 0);
-    signal dvalid_slow          : std_logic := '0';
-    signal dvalid_fast          : std_logic := '0';
+	signal previous_vphase          : std_logic := '0';
+	signal vphase_slow_validated    : std_logic := '0';
+	signal vphase_fast_validated    : std_logic := '0';
+    signal Y_slow                   : std_logic_vector(7 downto 0);
+    signal Y_slow_validated         : std_logic_vector(7 downto 0);
+    signal Y_fast                   : std_logic_vector(7 downto 0);
+    signal Y_fast_validated         : std_logic_vector(7 downto 0);
+    signal CbCr_slow                : std_logic_vector(7 downto 0);
+    signal CbCr_slow_validated      : std_logic_vector(7 downto 0);
+    signal CbCr_fast                : std_logic_vector(7 downto 0);
+    signal CbCr_fast_validated      : std_logic_vector(7 downto 0);
+    signal dvalid_slow              : std_logic := '0';
+    signal dvalid_fast              : std_logic := '0';
 
     -- Pixel clock
-    signal pclk_slow            : std_logic;
-    signal pclk_fast            : std_logic;
+    signal pclk_slow                : std_logic;
+    signal pclk_fast                : std_logic;
 begin
     -- State machine transitions - vdata: <Y0><CbCr0><Y1><CbCr1>...
     vphase_update: process(vclk)
@@ -71,8 +73,9 @@ begin
                     if (previous_vphase /= vphase) then
                         -- Slow mode detected. Flag new samples as ready.
                         dvalid_slow <= '1';
-                        Y_slow_out <= Y_slow;
-                        CbCr_slow_out <= CbCr_slow;
+                        vphase_slow_validated <= previous_vphase;
+                        Y_slow_validated <= Y_slow;
+                        CbCr_slow_validated <= CbCr_slow;
                         state_slow <= get_Y_x2;
                     else
                         state_slow <= reset_get_Y; -- Reset - a vphase change chould have happened.
@@ -123,8 +126,9 @@ begin
                     if (previous_vphase /= vphase) then
                         -- Fast mode detected.. Flag new samples as ready.
                         dvalid_fast <= '1';
-                        Y_fast_out <= Y_fast;
-                        CbCr_fast_out <= CbCr_fast;
+                        vphase_fast_validated <= previous_vphase;
+                        Y_fast_validated <= Y_fast;
+                        CbCr_fast_validated <= CbCr_fast;
                         state_fast <= get_CbCr;
                     else
                         state_fast <= reset_get_Y; -- Reset - a vphase change chould have happened.
@@ -144,20 +148,52 @@ begin
 
     -- Select output source from state machines
     source_select: process(vclk)
+        variable vphase_sample          : std_logic := '0';
+        variable Y_sample               : std_logic_vector(7 downto 0);
+        variable CbCr_sample            : std_logic_vector(7 downto 0);
     begin
         if (rising_edge(vclk)) then
             -- Select source
-            if (dvalid_slow = '0') then
-                dvalid_slow <= '1';
-                Y_fast_out;
-                CbCr_fast_out;
+            if (dvalid_slow = '1') then
+                dvalid_slow <= '0';
+                vphase_sample := vphase_slow_validated;
+                Y_sample := Y_slow_validated;
+                CbCr_sample := CbCr_slow_validated;
             elsif (dvalid_fast = '1') then
                 dvalid_fast <= '0';
-                Y_fast_out;
-                CbCr_fast_out;
+                vphase_sample := vphase_fast_validated;
+                Y_sample := Y_fast_validated;
+                CbCr_sample := CbCr_fast_validated;
             else
+                vphase_sample := '0';
+                Y_sample := Y_fast_validated;
+                CbCr_sample := CbCr_fast_validated;
             end if;
 
+            if (Y_sample = x"00") then	-- blanking data
+                Y <= x"10";
+                CbCr <= x"80";
+                H_sync <= not CbCr_sample(4);	-- Active low.
+                V_sync <= not CbCr_sample(5);	-- Active low.
+                is_odd <= not CbCr_sample(6);	-- Active low.
+                C_sync <= not CbCr_sample(7);	-- Active low.
+                Blanking <= '1';
+                is_Cr <= '0';
+            else						-- video sample
+                Y <= Y_sample;
+                CbCr <= CbCr_sample;
+                H_sync <= '0';
+                V_sync <= '0';
+                is_odd <= '0';
+                C_sync <= '0';
+                Blanking <= '0';
+                
+                if (vphase_sample = '1') then
+                    is_Cr <= '1';
+                else
+                    is_Cr <= '0';
+                end if;	-- if (vphase = '1')
+            end if;	-- if (Y_sample = x"00")
 
         end if; -- if (rising_edge(vclk))
     end process;
