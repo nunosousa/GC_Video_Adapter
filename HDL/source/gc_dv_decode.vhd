@@ -31,9 +31,13 @@ architecture behav of gc_dv_decode is
     -- Sample stores
 	signal previous_vphase		: std_logic := '0';
     signal Y_slow				: std_logic_vector(7 downto 0);
+    signal Y_slow_out			: std_logic_vector(7 downto 0);
     signal Y_fast				: std_logic_vector(7 downto 0);
+    signal Y_fast_out			: std_logic_vector(7 downto 0);
     signal CbCr_slow			: std_logic_vector(7 downto 0);
+    signal CbCr_slow_out		: std_logic_vector(7 downto 0);
     signal CbCr_fast			: std_logic_vector(7 downto 0);
+    signal CbCr_fast_out		: std_logic_vector(7 downto 0);
     signal dvalid_slow          : std_logic := '0';
     signal dvalid_fast          : std_logic := '0';
 
@@ -65,10 +69,11 @@ begin
                     Y_slow <= vdata;
                     CbCr_slow <= x"00";
                     if (previous_vphase /= vphase) then
+                        -- Slow mode detected. Flag new samples as ready.
                         dvalid_slow <= '1';
-                        -- out Y_slow
-                        -- out CbCr_slow
-                        state_slow <= get_Y_x2; -- Slow mode detected.
+                        Y_slow_out <= Y_slow;
+                        CbCr_slow_out <= CbCr_slow;
+                        state_slow <= get_Y_x2;
                     else
                         state_slow <= reset_get_Y; -- Reset - a vphase change chould have happened.
                     end if;
@@ -116,10 +121,11 @@ begin
                     Y_fast <= vdata;
                     CbCr_fast <= x"00";
                     if (previous_vphase /= vphase) then
+                        -- Fast mode detected.. Flag new samples as ready.
                         dvalid_fast <= '1';
-                        -- out Y_fast
-                        -- out CbCr_fast
-                        state_fast <= get_CbCr; -- Fast mode detected.
+                        Y_fast_out <= Y_fast;
+                        CbCr_fast_out <= CbCr_fast;
+                        state_fast <= get_CbCr;
                     else
                         state_fast <= reset_get_Y; -- Reset - a vphase change chould have happened.
                     end if;
@@ -141,8 +147,14 @@ begin
     begin
         if (rising_edge(vclk)) then
             -- Select source
-            if (dvalid_slow = '1') then
+            if (dvalid_slow = '0') then
+                dvalid_slow <= '1';
+                Y_fast_out;
+                CbCr_fast_out;
             elsif (dvalid_fast = '1') then
+                dvalid_fast <= '0';
+                Y_fast_out;
+                CbCr_fast_out;
             else
             end if;
 
