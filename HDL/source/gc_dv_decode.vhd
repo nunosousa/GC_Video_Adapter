@@ -78,11 +78,13 @@ begin
                         CbCr_slow_validated <= CbCr_slow;
                         state_slow <= get_Y_x2;
                     else
+                        dvalid_slow <= '0';
                         state_slow <= reset_get_Y; -- Reset - a vphase change chould have happened.
                     end if;
                 when get_Y_x2 =>
                     Y_slow <= vdata;
                     CbCr_slow <= x"00";
+                    dvalid_slow <= '0';
                     if (previous_vphase /= vphase) then
                         state_slow <= reset_get_Y; -- Reset - wrong timing for vphase change.
                     else
@@ -91,6 +93,7 @@ begin
                 when get_CbCr =>
                     Y_slow <= Y_slow;
                     CbCr_slow <= vdata;
+                    dvalid_slow <= '0';
                     if (previous_vphase /= vphase) then
                         state_slow <= reset_get_Y; -- Reset - Fast mode detected.
                     else
@@ -99,6 +102,7 @@ begin
                 when get_CbCr_x2 =>
                     Y_slow <= Y_slow;
                     CbCr_slow <= vdata;
+                    dvalid_slow <= '0';
                     if (previous_vphase /= vphase) then
                         state_slow <= reset_get_Y; -- Reset - wrong timing for vphase change.
                     else
@@ -131,11 +135,13 @@ begin
                         CbCr_fast_validated <= CbCr_fast;
                         state_fast <= get_CbCr;
                     else
+                        dvalid_fast <= '0';
                         state_fast <= reset_get_Y; -- Reset - a vphase change chould have happened.
                     end if;
                 when get_CbCr =>
                     Y_fast <= Y_fast;
                     CbCr_fast <= vdata;
+                    dvalid_fast <= '0';
                     if (previous_vphase /= vphase) then
                         state_fast <= reset_get_Y; -- Reset - wrong timing for vphase change.
                     else
@@ -148,7 +154,7 @@ begin
 
     -- Select output source from state machines
     source_select: process(vclk)
-        variable valid_sample          : std_logic;
+        variable valid_sample           : std_logic;
         variable vphase_sample          : std_logic;
         variable Y_sample               : std_logic_vector(7 downto 0);
         variable CbCr_sample            : std_logic_vector(7 downto 0);
@@ -156,13 +162,11 @@ begin
         if (rising_edge(vclk)) then
             -- Select source
             if (dvalid_slow = '1') then
-                dvalid_slow <= '0';
                 valid_sample := '1';
                 vphase_sample := vphase_slow_validated;
                 Y_sample := Y_slow_validated;
                 CbCr_sample := CbCr_slow_validated;
             elsif (dvalid_fast = '1') then
-                dvalid_fast <= '0';
                 valid_sample := '1';
                 vphase_sample := vphase_fast_validated;
                 Y_sample := Y_fast_validated;
