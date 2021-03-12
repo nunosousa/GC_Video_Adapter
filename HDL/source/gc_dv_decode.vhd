@@ -29,9 +29,9 @@ architecture behav of gc_dv_decode is
     signal state_fast               : state_typ := reset_get_Y;
     
     -- Sample stores
-	signal previous_vphase          : std_logic := '0';
-	signal vphase_slow_validated    : std_logic := '0';
-	signal vphase_fast_validated    : std_logic := '0';
+	signal previous_vphase          : std_logic;
+	signal vphase_slow_validated    : std_logic;
+	signal vphase_fast_validated    : std_logic;
     signal Y_slow                   : std_logic_vector(7 downto 0);
     signal Y_slow_validated         : std_logic_vector(7 downto 0);
     signal Y_fast                   : std_logic_vector(7 downto 0);
@@ -72,14 +72,14 @@ begin
                     CbCr_slow <= x"00";
                     if (previous_vphase /= vphase) then
                         -- Slow mode detected. Flag new samples as ready.
-                        dvalid_slow <= '1';
                         vphase_slow_validated <= previous_vphase;
                         Y_slow_validated <= Y_slow;
                         CbCr_slow_validated <= CbCr_slow;
+                        dvalid_slow <= '1';
                         state_slow <= get_Y_x2;
                     else
                         dvalid_slow <= '0';
-                        state_slow <= reset_get_Y; -- Reset - a vphase change chould have happened.
+                        state_slow <= reset_get_Y; -- Reset - a vphase change should have happened.
                     end if;
                 when get_Y_x2 =>
                     Y_slow <= vdata;
@@ -129,14 +129,14 @@ begin
                     CbCr_fast <= x"00";
                     if (previous_vphase /= vphase) then
                         -- Fast mode detected.. Flag new samples as ready.
-                        dvalid_fast <= '1';
                         vphase_fast_validated <= previous_vphase;
                         Y_fast_validated <= Y_fast;
                         CbCr_fast_validated <= CbCr_fast;
+                        dvalid_fast <= '1';
                         state_fast <= get_CbCr;
                     else
                         dvalid_fast <= '0';
-                        state_fast <= reset_get_Y; -- Reset - a vphase change chould have happened.
+                        state_fast <= reset_get_Y; -- Reset - a vphase change should have happened.
                     end if;
                 when get_CbCr =>
                     Y_fast <= Y_fast;
