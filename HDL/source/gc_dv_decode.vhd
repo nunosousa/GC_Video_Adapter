@@ -200,42 +200,44 @@ begin
 
     -- Select output source from state machines
     source_select: process(vclk)
-        variable valid_sample           : std_logic;
+        variable new_sample             : std_logic;
         variable vphase_sample          : std_logic;
         variable Y_sample               : std_logic_vector(7 downto 0);
         variable CbCr_sample            : std_logic_vector(7 downto 0);
         
         type source_typ is (none, slow, fast);
-        variable source_active          : state_fast_typ := none;
+        variable source_active          : source_typ := none;
     begin
         if (rising_edge(vclk)) then
-            -- Set data valid flag
+            -- Set data valid flag and source indication
             if (((dinvalid_slow = '1') and (source_active = slow)) or ((dinvalid_fast = '1') and (source_active = fast))) then 
                 source_active := none;
 				dvalid <= '0';
-            elsif ((dvalid_slow = '1') or (dvalid_fast = '1')) then
+            elsif (dvalid_slow = '1') then
+                source_active := slow;
+                dvalid <= '1';
+            elsif (dvalid_fast = '1') then
+                source_active := fast;
                 dvalid <= '1';
             end if;
 
-            -- Select source
+            -- Select source of samples
             if (dvalid_slow = '1') then
-                source_active := slow;
-                valid_sample := '1';
+                new_sample := '1';
                 vphase_sample := vphase_slow_validated;
                 Y_sample := Y_slow_validated;
                 CbCr_sample := CbCr_slow_validated;
             elsif (dvalid_fast = '1') then
-                source_active := fast;
-                valid_sample := '1';
+                new_sample := '1';
                 vphase_sample := vphase_fast_validated;
                 Y_sample := Y_fast_validated;
                 CbCr_sample := CbCr_fast_validated;
             else
-                valid_sample := '0';
+                new_sample := '0';
             end if;
 
 			-- If new sample exists, set output interface video values and flags
-			if (valid_sample = '1') then
+			if (new_sample = '1') then
 				if (Y_sample = x"00") then	-- blanking data
 					Y <= x"10";
 					CbCr <= x"80";
@@ -260,14 +262,14 @@ begin
 						is_Cr <= '0';
 					end if;	-- if (vphase_sample = '1')
 				end if;	-- if (Y_sample = x"00")
-			end if;	-- if (valid_sample = '1')
+			end if;	-- if (new_sample = '1')
 
             -- Pixel clock generation
-            case tbd is
-                when pclk_high =>
-                    if (source_active)
-                when pclk_low =>
-                when others => state_fast <= get_vphase_sync;
+            case source_active is
+                when none => pclk <= '0';
+                when slow =>
+                when fast =>
+                when others => pclk <= '0';
             end case; --case state_fast is
         end if; -- if (rising_edge(vclk))
     end process;
