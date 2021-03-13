@@ -204,15 +204,28 @@ begin
         variable vphase_sample          : std_logic;
         variable Y_sample               : std_logic_vector(7 downto 0);
         variable CbCr_sample            : std_logic_vector(7 downto 0);
+        
+        type source_typ is (none, slow, fast);
+        variable source_active          : state_fast_typ := none;
     begin
         if (rising_edge(vclk)) then
+            -- Set data valid flag
+            if (((dinvalid_slow = '1') and (source_active = slow)) or ((dinvalid_fast = '1') and (source_active = fast))) then 
+                source_active := none;
+				dvalid <= '0';
+            elsif ((dvalid_slow = '1') or (dvalid_fast = '1')) then
+                dvalid <= '1';
+            end if;
+
             -- Select source
             if (dvalid_slow = '1') then
+                source_active := slow;
                 valid_sample := '1';
                 vphase_sample := vphase_slow_validated;
                 Y_sample := Y_slow_validated;
                 CbCr_sample := CbCr_slow_validated;
             elsif (dvalid_fast = '1') then
+                source_active := fast;
                 valid_sample := '1';
                 vphase_sample := vphase_fast_validated;
                 Y_sample := Y_fast_validated;
@@ -223,9 +236,6 @@ begin
 
 			-- If new sample exists, set output interface video values and flags
 			if (valid_sample = '1') then
-				valid_sample := '0';
-				dvalid <= '1';
-				
 				if (Y_sample = x"00") then	-- blanking data
 					Y <= x"10";
 					CbCr <= x"80";
@@ -251,18 +261,14 @@ begin
 					end if;	-- if (vphase_sample = '1')
 				end if;	-- if (Y_sample = x"00")
 			end if;	-- if (valid_sample = '1')
-        end if; -- if (rising_edge(vclk))
-    end process;
 
-    -- Pixel clock generation
-    pclk_generator: process(vclk)
-    begin
-        if (rising_edge(vclk)) then
-            -- Select source
-            if (dvalid_slow = '1') then
-            elsif (dvalid_fast = '1') then
-            else
-            end if;
+            -- Pixel clock generation
+            case tbd is
+                when pclk_high =>
+                    if (source_active)
+                when pclk_low =>
+                when others => state_fast <= get_vphase_sync;
+            end case; --case state_fast is
         end if; -- if (rising_edge(vclk))
     end process;
 end behav;
