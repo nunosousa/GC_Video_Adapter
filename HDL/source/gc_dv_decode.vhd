@@ -25,9 +25,9 @@ end entity;
 architecture behav of gc_dv_decode is
     -- State machine state definition
     type state_slow_typ is (reset, get_vphase_sync, get_Y, get_Y_x2, get_CbCr, get_CbCr_x2);
-    signal state_slow               : state_typ := reset;
+    signal state_slow               : state_slow_typ := reset;
     type state_fast_typ is (reset, get_vphase_sync, get_Y, get_CbCr);
-    signal state_fast               : state_typ := reset;
+    signal state_fast               : state_fast_typ := reset;
     
     -- Sample stores
 	signal previous_vphase          : std_logic;
@@ -135,7 +135,7 @@ begin
                         CbCr_slow <= x"00";
                         state_slow <= get_Y_x2;
                     end if;
-                when others => state_slow <= reset_get_Y;
+                when others => state_slow <= get_vphase_sync;
             end case;
         end if; -- if (rising_edge(vclk))
     end process;
