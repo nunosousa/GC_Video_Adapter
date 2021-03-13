@@ -24,9 +24,10 @@ end entity;
 
 architecture behav of gc_dv_decode is
     -- State machine state definition
-    type state_typ is (reset_get_Y, get_Y, get_Y_x2, get_CbCr, get_CbCr_x2);
-    signal state_slow               : state_typ := reset_get_Y;
-    signal state_fast               : state_typ := reset_get_Y;
+    type state_slow_typ is (reset, get_vphase_sync, get_Y, get_Y_x2, get_CbCr, get_CbCr_x2);
+    signal state_slow               : state_typ := reset;
+    type state_fast_typ is (reset, get_vphase_sync, get_Y, get_CbCr);
+    signal state_fast               : state_typ := reset;
     
     -- Sample stores
 	signal previous_vphase          : std_logic;
@@ -41,113 +42,158 @@ architecture behav of gc_dv_decode is
     signal CbCr_fast                : std_logic_vector(7 downto 0);
     signal CbCr_fast_validated      : std_logic_vector(7 downto 0);
     signal dvalid_slow              : std_logic := '0';
+    signal dinvalid_slow            : std_logic := '0';
     signal dvalid_fast              : std_logic := '0';
+    signal dinvalid_fast            : std_logic := '0';
 
     -- Pixel clock
     signal pclk_slow                : std_logic;
     signal pclk_fast                : std_logic;
 begin
-    -- State machine transitions - vdata: <Y0><CbCr0><Y1><CbCr1>...
+    -- Store previous vphase state
     vphase_update: process(vclk)
     begin
         if (rising_edge(vclk)) then
-            -- Store previous vphase state
             previous_vphase <= vphase;
         end if; -- if (rising_edge(vclk))
     end process;
 
-    -- State machine transitions - vdata: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr1><CbCr1>...
+    -- State machine transitions - vdata format: <Y0><Y0><CbCr0><CbCr0><Y1><Y1><CbCr0><CbCr0>...
     state_update_slow: process(vclk)
     begin
         if (rising_edge(vclk)) then
             -- State machine transitions
             case state_slow is
-                when reset_get_Y =>
-                    Y_slow <= vdata;
-                    CbCr_slow <= x"00";
+                when reset =>
                     dvalid_slow <= '0';
-                    state_slow <= get_Y_x2;
-                when get_Y =>
-                    Y_slow <= vdata;
+                    dinvalid_slow <= '1';
+                    Y_slow <= x"00";
                     CbCr_slow <= x"00";
+                    state_slow <= get_vphase_sync;
+                when get_vphase_sync =>
+                    dvalid_slow <= '0';
+                    dinvalid_slow <= '1';
                     if (previous_vphase /= vphase) then
-                        -- Slow mode detected. Flag new samples as ready.
-                        vphase_slow_validated <= previous_vphase;
-                        Y_slow_validated <= Y_slow;
-                        CbCr_slow_validated <= CbCr_slow;
-                        dvalid_slow <= '1';
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
                         state_slow <= get_Y_x2;
                     else
+                        Y_slow <= x"00";
+                        CbCr_slow <= x"00";
+                        state_slow <= get_vphase_sync;
+                    end if;
+                when get_Y =>
+                    if (previous_vphase /= vphase) then -- New slow mode samples detected. Set outputs.
+                        dvalid_slow <= '1';
+                        dinvalid_slow <= '0';
+                        vphase_fast_validated <= previous_vphase;
+                        Y_slow_validated <= Y_slow;
+                        CbCr_slow_validated <= CbCr_slow;
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
+                        state_slow <= get_Y_x2;
+                    else -- Reset - a vphase change should have happened.
                         dvalid_slow <= '0';
-                        state_slow <= reset_get_Y; -- Reset - a vphase change should have happened.
+                        dinvalid_slow <= '1';
+                        Y_slow <= x"00";
+                        CbCr_slow <= x"00";
+                        state_slow <= get_vphase_sync;
                     end if;
                 when get_Y_x2 =>
-                    Y_slow <= vdata;
-                    CbCr_slow <= x"00";
                     dvalid_slow <= '0';
-                    if (previous_vphase /= vphase) then
-                        state_slow <= reset_get_Y; -- Reset - wrong timing for vphase change.
-                    else
+                    dinvalid_slow <= '0';
+                    if (previous_vphase = vphase) then
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
                         state_slow <= get_CbCr;
+                    else -- Unexpected start of new cycle. Get Y sample.
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
+                        state_slow <= get_Y_x2;
                     end if;
                 when get_CbCr =>
-                    Y_slow <= Y_slow;
-                    CbCr_slow <= vdata;
                     dvalid_slow <= '0';
-                    if (previous_vphase /= vphase) then
-                        state_slow <= reset_get_Y; -- Reset - Fast mode detected.
-                    else
+                    dinvalid_slow <= '0';
+                    if (previous_vphase = vphase) then
+                        Y_slow <= Y_slow;
+                        CbCr_slow <= vdata;
                         state_slow <= get_CbCr_x2;
+                    else -- Unexpected start of new cycle. Get Y sample.
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
+                        state_slow <= get_Y_x2;
                     end if;
                 when get_CbCr_x2 =>
-                    Y_slow <= Y_slow;
-                    CbCr_slow <= vdata;
                     dvalid_slow <= '0';
-                    if (previous_vphase /= vphase) then
-                        state_slow <= reset_get_Y; -- Reset - wrong timing for vphase change.
-                    else
+                    dinvalid_slow <= '0';
+                    if (previous_vphase = vphase) then
+                        Y_slow <= Y_slow;
+                        CbCr_slow <= vdata;
                         state_slow <= get_Y;
+                    else -- Unexpected start of new cycle. Get Y sample.
+                        Y_slow <= vdata;
+                        CbCr_slow <= x"00";
+                        state_slow <= get_Y_x2;
                     end if;
                 when others => state_slow <= reset_get_Y;
             end case;
         end if; -- if (rising_edge(vclk))
     end process;
 
-    -- State machine transitions - vdata: <Y0><CbCr0><Y1><CbCr1>...
+    -- State machine transitions - vdata format: <Y0><CbCr0><Y1><CbCr0>...
     state_update_fast: process(vclk)
     begin
         if (rising_edge(vclk)) then
             -- State machine transitions
             case state_fast is
-                when reset_get_Y =>
-                    Y_fast <= vdata;
-                    CbCr_fast <= x"00";
+                when reset =>
                     dvalid_fast <= '0';
-                    state_fast <= get_CbCr;
-                when get_Y =>
-                    Y_fast <= vdata;
+                    dinvalid_fast <= '1';
+                    Y_fast <= x"00";
                     CbCr_fast <= x"00";
+                    state_fast <= get_vphase_sync;
+                when get_vphase_sync =>
+                    dvalid_fast <= '0';
+                    dinvalid_fast <= '1';
                     if (previous_vphase /= vphase) then
-                        -- Fast mode detected.. Flag new samples as ready.
+                        Y_fast <= vdata;
+                        CbCr_fast <= x"00";
+                        state_fast <= get_CbCr;
+                    else
+                        Y_fast <= x"00";
+                        CbCr_fast <= x"00";
+                        state_fast <= get_vphase_sync;
+                    end if;
+                when get_Y =>
+                    if (previous_vphase /= vphase) then -- New fast mode samples detected. Set outputs.
+                        dvalid_fast <= '1';
+                        dinvalid_fast <= '0';
                         vphase_fast_validated <= previous_vphase;
                         Y_fast_validated <= Y_fast;
                         CbCr_fast_validated <= CbCr_fast;
-                        dvalid_fast <= '1';
+                        Y_fast <= vdata;
+                        CbCr_fast <= x"00";
                         state_fast <= get_CbCr;
-                    else
+                    else -- Reset - a vphase change should have happened.
                         dvalid_fast <= '0';
-                        state_fast <= reset_get_Y; -- Reset - a vphase change should have happened.
+                        dinvalid_fast <= '1';
+                        Y_fast <= x"00";
+                        CbCr_fast <= x"00";
+                        state_fast <= get_vphase_sync;
                     end if;
                 when get_CbCr =>
-                    Y_fast <= Y_fast;
-                    CbCr_fast <= vdata;
                     dvalid_fast <= '0';
-                    if (previous_vphase /= vphase) then
-                        state_fast <= reset_get_Y; -- Reset - wrong timing for vphase change.
-                    else
+                    dinvalid_fast <= '0';
+                    if (previous_vphase = vphase) then
+                        Y_fast <= Y_fast;
+                        CbCr_fast <= vdata;
                         state_fast <= get_Y;
+                    else -- Unexpected start of new cycle. Get Y sample.
+                        Y_fast <= vdata;
+                        CbCr_fast <= x"00";
+                        state_fast <= get_CbCr;
                     end if;
-                when others => state_fast <= reset_get_Y;
+                when others => state_fast <= get_vphase_sync;
             end case; --case state_fast is
         end if; -- if (rising_edge(vclk))
     end process;
@@ -173,9 +219,6 @@ begin
                 CbCr_sample := CbCr_fast_validated;
             else
                 valid_sample := '0';
-                vphase_sample := '0';
-                Y_sample := x"00";
-                CbCr_sample := x"00";
             end if;
 
 			-- If new sample exists, set output interface video values and flags
@@ -205,9 +248,21 @@ begin
 						is_Cr <= '1';
 					else
 						is_Cr <= '0';
-					end if;	-- if (vphase = '1')
+					end if;	-- if (vphase_sample = '1')
 				end if;	-- if (Y_sample = x"00")
 			end if;	-- if (valid_sample = '1')
+        end if; -- if (rising_edge(vclk))
+    end process;
+
+    -- Pixel clock generation
+    pclk_generator: process(vclk)
+    begin
+        if (rising_edge(vclk)) then
+            -- Select source
+            if (dvalid_slow = '1') then
+            elsif (dvalid_fast = '1') then
+            else
+            end if;
         end if; -- if (rising_edge(vclk))
     end process;
 end behav;
