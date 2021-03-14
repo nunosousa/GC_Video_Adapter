@@ -46,9 +46,13 @@ architecture behav of gc_dv_decode is
     signal dvalid_fast              : std_logic := '0';
     signal dinvalid_fast            : std_logic := '0';
 
+    -- Active source indication
+    type source_typ is (none, slow, fast);
+    signal source_active            : source_typ := none;
+
     -- Pixel clock
-    signal pclk_slow                : std_logic;
-    signal pclk_fast                : std_logic;
+    type pclk_state_typ is (pclk_wait, pclk_low_slow, pclk_high_slow, pclk_high_slow_x2, pclk_high_fast);
+    signal pclk_state               : pclk_state_typ := pclk_wait;
 begin
     -- Store previous vphase state
     vphase_update: process(vclk)
@@ -198,29 +202,14 @@ begin
         end if; -- if (rising_edge(vclk))
     end process;
 
-    -- Select output source from state machines
+    -- Select output source between slow or fast mode state machines
     source_select: process(vclk)
         variable new_sample             : std_logic;
         variable vphase_sample          : std_logic;
         variable Y_sample               : std_logic_vector(7 downto 0);
         variable CbCr_sample            : std_logic_vector(7 downto 0);
-        
-        type source_typ is (none, slow, fast);
-        variable source_active          : source_typ := none;
     begin
         if (rising_edge(vclk)) then
-            -- Set data valid flag and source indication
-            if (((dinvalid_slow = '1') and (source_active = slow)) or ((dinvalid_fast = '1') and (source_active = fast))) then 
-                source_active := none;
-				dvalid <= '0';
-            elsif (dvalid_slow = '1') then
-                source_active := slow;
-                dvalid <= '1';
-            elsif (dvalid_fast = '1') then
-                source_active := fast;
-                dvalid <= '1';
-            end if;
-
             -- Select source of samples
             if (dvalid_slow = '1') then
                 new_sample := '1';
@@ -263,14 +252,54 @@ begin
 					end if;	-- if (vphase_sample = '1')
 				end if;	-- if (Y_sample = x"00")
 			end if;	-- if (new_sample = '1')
+        end if; -- if (rising_edge(vclk))
+    end process;
+
+    -- Select output data valid flag and generate pixel clock
+    dvalid_pclk_update: process(vclk)
+    begin
+        if (rising_edge(vclk)) then
+            -- Set data valid flag and source indication
+            if (((dinvalid_slow = '1') and (source_active = slow)) or ((dinvalid_fast = '1') and (source_active = fast))) then 
+                source_active <= none;
+				dvalid <= '0';
+            elsif (dvalid_slow = '1') then
+                source_active <= slow;
+                dvalid <= '1';
+            elsif (dvalid_fast = '1') then
+                source_active <= fast;
+                dvalid <= '1';
+            end if;
 
             -- Pixel clock generation
-            case source_active is
-                when none => pclk <= '0';
-                when slow =>
-                when fast =>
-                when others => pclk <= '0';
-            end case; --case state_fast is
+            if (((dinvalid_slow = '1') and (source_active = slow)) or ((dinvalid_fast = '1') and (source_active = fast))) then 
+                pclk <= '0';
+				pclk_state <= pclk_wait;
+            elsif (dvalid_slow = '1') then
+                pclk <= '0';
+                pclk_state <= pclk_low_slow;
+            elsif (dvalid_fast = '1') then
+                pclk <= '0';
+                pclk_state <= pclk_high_fast;
+            else
+                case pclk_state is
+                    when pclk_wait =>
+                        pclk <= '0';
+                        pclk_state <= pclk_wait;
+                    when pclk_low_slow =>
+                        pclk <= '0';
+                        pclk_state <= pclk_high_slow;
+                    when pclk_high_slow =>
+                        pclk <= '1';
+                        pclk_state <= pclk_high_slow_x2;
+                    when pclk_high_slow_x2 =>
+                        pclk <= '1';
+                        pclk_state <= pclk_wait;
+                    when pclk_high_fast =>
+                        pclk <= '1';
+                        pclk_state <= pclk_wait;
+                end case; --case pclk_state is
+            end if;
         end if; -- if (rising_edge(vclk))
     end process;
 end behav;
