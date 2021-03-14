@@ -90,7 +90,7 @@ begin
                     if (previous_vphase /= vphase) then -- New slow mode samples detected. Set outputs.
                         dvalid_slow <= '1';
                         dinvalid_slow <= '0';
-                        vphase_fast_validated <= previous_vphase;
+                        vphase_slow_validated <= previous_vphase;
                         Y_slow_validated <= Y_slow;
                         CbCr_slow_validated <= CbCr_slow;
                         Y_slow <= vdata;
