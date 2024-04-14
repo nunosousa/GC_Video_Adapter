@@ -1,4 +1,5 @@
 (sym_lib_table
-  (lib (name FPGA_Lattice_custom)(type Legacy)(uri ${KIPRJMOD}/FPGA_Lattice_custom.lib)(options "")(descr ""))
-  (lib (name Video_custom)(type Legacy)(uri ${KIPRJMOD}/Video_custom.lib)(options "")(descr ""))
+  (lib (name "FPGA_Lattice_custom")(type "Legacy")(uri "${KIPRJMOD}/FPGA_Lattice_custom.lib")(options "")(descr ""))
+  (lib (name "Video_custom")(type "Legacy")(uri "${KIPRJMOD}/Video_custom.lib")(options "")(descr ""))
+  (lib (name "GC_Video_Adapter-rescue")(type "Legacy")(uri "${KIPRJMOD}/GC_Video_Adapter-rescue.lib")(options "")(descr ""))
 )
